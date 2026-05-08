@@ -969,35 +969,7 @@ export default function AlgencyPromptEditor() {
                       </div>
                       <div className="alg-var-card__hint">Used until the buyer changes it.</div>
 
-                      {/* Stacked values */}
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 4 }}>
-                        {variable.values.map((val, idx) => (
-                          <span key={idx} className="alg-val-chip">
-                            {val}
-                            <button className="alg-val-chip__remove" onClick={(e) => {
-                              e.stopPropagation();
-                              updateVariable(variable.id, { values: variable.values.filter((_, i) => i !== idx) });
-                            }}>×</button>
-                          </span>
-                        ))}
-                      </div>
-                      <input
-                        className="alg-val-add-input"
-                        placeholder="+ Add value, press Enter"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            const val = (e.target as HTMLInputElement).value.trim();
-                            if (val && !variable.values.includes(val)) {
-                              const updates: any = { values: [...variable.values, val] };
-                              if (!variable.defaultValue) updates.defaultValue = val;
-                              updateVariable(variable.id, updates);
-                            }
-                            (e.target as HTMLInputElement).value = "";
-                          }
-                        }}
-                      />
+
                     </>
                   ) : (
                     <>
