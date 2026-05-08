@@ -417,14 +417,14 @@ html.dark {
 
 .alg-var-card__name {
   font-family: var(--font-serif), 'Playfair Display', serif;
-  font-size: clamp(16px, 1vw + 10px, 20px); font-weight: 500; color: #1C1A18; 
+  font-size: clamp(14px, 0.8vw + 8px, 18px); font-weight: 500; color: #1C1A18; 
   padding-bottom: 4px; margin-bottom: 6px;
   border-bottom: 1px solid #EDE8E0; line-height: 1.1;
 }
 
 .alg-var-card__default-val {
   font-family: var(--font-serif), 'Playfair Display', serif;
-  font-size: clamp(14px, 1vw + 6px, 18px); font-weight: 500; color: #1C1A18;
+  font-size: clamp(12px, 0.6vw + 6px, 15px); font-weight: 500; color: #1C1A18;
 }
 .alg-var-card__default-val--italic {
   font-style: italic; color: #C4BDB5;
