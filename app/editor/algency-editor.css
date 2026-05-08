@@ -349,7 +349,7 @@ html.dark {
   color: var(--alg-text); outline: none; transition: border-color 0.2s ease;
 }
 .alg-input--title {
-  font-family: var(--font-outfit), 'Outfit', sans-serif;
+  font-family: var(--font-serif), 'Playfair Display', serif;
   font-size: clamp(16px, 1.2vw + 6px, 20px);
   font-weight: 500;
   padding: 12px 14px;
