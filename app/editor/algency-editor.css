@@ -293,7 +293,7 @@ html.dark {
 /* ─── Ratio Pills ─── */
 .alg-ratio-group { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
 .alg-ratio-pill {
-  padding: 5px 10px; border-radius: 3px; font-size: 11px; font-weight: 500;
+  padding: clamp(6px, 0.8vw, 10px) clamp(12px, 1.2vw + 6px, 18px); border-radius: 3px; font-size: clamp(12px, 0.8vw + 6px, 16px); font-weight: 500;
   border: 1px solid var(--alg-border); background: var(--alg-white);
   cursor: pointer; transition: none; color: var(--alg-text);
   font-family: var(--font-jetbrains-mono), monospace;
