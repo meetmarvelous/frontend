@@ -143,6 +143,9 @@ importers:
       '@turnkey/api-key-stamper':
         specifier: ^0.6.6
         version: 0.6.6
+      '@turnkey/http':
+        specifier: ^4.0.0
+        version: 4.0.0
       '@turnkey/sdk-browser':
         specifier: ^6.0.0
         version: 6.0.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)
