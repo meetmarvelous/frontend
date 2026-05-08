@@ -373,13 +373,15 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     </DropdownMenuItem>
                   </>
                 )}
-                {!authenticated && (
-                  <div className="px-2 py-1.5">
-                    <Button className="w-full" size="sm" onClick={() => setShowWalletPicker(true)}>
-                      Connect Wallet
-                    </Button>
-                  </div>
-                )}
+                <div className="px-2 py-1.5">
+                  <Button 
+                    className="w-full bg-[#C7663A] hover:bg-[#A3522E] text-white rounded-none h-8 text-[10px] font-mono uppercase tracking-wider" 
+                    size="sm" 
+                    onClick={() => setShowWalletPicker(true)}
+                  >
+                    Connect Wallet
+                  </Button>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -98,5 +98,21 @@
   "overrides": {
     "react": "19.2.3",
     "react-dom": "19.2.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@google/genai",
+      "@stellar/stellar-sdk",
+      "bigint-buffer",
+      "blake-hash",
+      "bufferutil",
+      "keccak",
+      "protobufjs",
+      "sharp",
+      "tiny-secp256k1",
+      "unrs-resolver",
+      "usb",
+      "utf-8-validate"
+    ]
   }
 }

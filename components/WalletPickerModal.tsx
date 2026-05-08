@@ -31,6 +31,8 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [pendingSolana, setPendingSolana] = useState<string | null>(null);
 
+  console.log('DEBUG: solanaWallets', solanaWallets.length, solanaWallets.map(w => w.adapter.name));
+
   // Email / Turnkey state
   const { set: setTurnkeyAuth } = useTurnkeyEmailAuth();
   const { step, error: turnkeyError, walletAddress: turnkeyWalletAddress, subOrganizationId, sessionToken, sendOtp, verifyOtp, reset: resetTurnkey } = useTurnkeyWallet();
@@ -124,7 +126,7 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose(); }}>
       <DialogContent className="sm:max-w-xs p-4">
         <DialogHeader>
-          <DialogTitle className="text-base">Connect Wallet</DialogTitle>
+          <DialogTitle className="text-base">Connect Wallet (DEBUG: Modal Rendering)</DialogTitle>
           <DialogDescription className="sr-only">
             Select a Solana or EVM wallet to connect to Symphora.
           </DialogDescription>
@@ -183,6 +185,17 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
           ) : null}
 
           {/* Solana wallets */}
+          <button
+            className="flex items-center justify-between w-full p-3 rounded-lg border hover:bg-accent transition-colors"
+            onClick={() => console.log('Mock Solana Wallet Clicked')}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center text-white font-bold text-xs">M</div>
+              <span className="font-medium">Mock Solana Wallet (TEST)</span>
+            </div>
+            <span className="text-xs text-muted-foreground italic">Debug Entry</span>
+          </button>
+
           {solanaWallets.map((w) => {
             const notInstalled =
               w.readyState === WalletReadyState.NotDetected ||

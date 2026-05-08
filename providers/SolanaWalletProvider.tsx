@@ -29,6 +29,8 @@ export function SolanaWalletProvider({ children }: { children: React.ReactNode }
     []
   );
 
+  console.log('DEBUG: SolanaWalletProvider Rendering');
+
   return (
     <ConnectionProvider endpoint={SOLANA_DEVNET_RPC}>
       <WalletProvider wallets={wallets} autoConnect={false}>
