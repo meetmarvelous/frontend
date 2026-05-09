@@ -708,51 +708,6 @@ export default function AlgencyPromptEditor() {
       <Navbar />
       <WalletPickerModal open={showWalletPicker} onClose={() => setShowWalletPicker(false)} />
 
-      {/* ═══ PROMPT TITLE HEADER ═══ */}
-      <div style={{
-        padding: "10px 24px 12px",
-        background: "var(--alg-bg)",
-        borderBottom: "1px solid var(--alg-border)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "2px",
-        alignItems: "flex-start",
-        flexShrink: 0
-      }}>
-        <span style={{
-          fontSize: "9px",
-          fontWeight: 700,
-          letterSpacing: "1.5px",
-          color: "var(--alg-hint)",
-          textTransform: "uppercase",
-          fontFamily: "var(--font-inter), sans-serif"
-        }}>
-          Prompt Title
-        </span>
-        <input
-          value={promptData.title}
-          onChange={(e) => setPromptData(prev => ({ ...prev, title: e.target.value }))}
-          placeholder="Untitled Prompt"
-          style={{
-            width: "100%",
-            fontSize: "clamp(28px, 2.5vw + 12px, 40px)",
-            fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
-            fontStyle: "italic",
-            fontWeight: 300,
-            color: "var(--alg-dark)",
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            padding: 0,
-            margin: 0,
-            lineHeight: "1.2",
-            letterSpacing: "-0.01em",
-          }}
-        />
-      </div>
-
-
-
       {/* ═══ 4-COLUMN GRID ═══ */}
       <div className="alg-grid desktop-only">
 
@@ -765,6 +720,31 @@ export default function AlgencyPromptEditor() {
             </div>
           </div>
           <div className="alg-panel__body">
+            {/* Prompt Title */}
+            <div className="alg-label">PROMPT TITLE</div>
+            <input
+              value={promptData.title}
+              onChange={(e) => setPromptData(prev => ({ ...prev, title: e.target.value }))}
+              placeholder="Untitled Prompt"
+              style={{
+                width: "100%",
+                fontSize: "32px",
+                fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
+                fontStyle: "italic",
+                fontWeight: 300,
+                color: "var(--alg-dark)",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                padding: "4px 0 12px 0",
+                margin: 0,
+                lineHeight: "1.2",
+                letterSpacing: "-0.01em",
+              }}
+            />
+            
+            <div className="alg-divider" style={{ marginTop: "8px" }} />
+
             {/* Display Mode */}
             <div className="alg-label">DISPLAY MODE</div>
             <div
@@ -1230,7 +1210,7 @@ export default function AlgencyPromptEditor() {
               <div>
                 <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", fontWeight: 700, color: "var(--alg-text)", margin: "0 0 2px" }}>Ownership Notice</p>
                 <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", color: "var(--alg-muted)", lineHeight: 1.5, margin: 0 }}>
-                  Free prompts need to allow variahses an copy and remix it.
+                  Only mark prompts as your own property if you genuinely created them. We will be rolling out methods to verify prompt originality. Falsely claiming authorship will be flagged and may result in strikes against your account. See Terms of Service.
                 </p>
               </div>
             </div>
