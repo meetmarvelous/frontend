@@ -144,7 +144,7 @@
 
 .dark .enki-catbar-all:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(168, 85, 247, 0.4);
+  border-color: rgba(201, 104, 56, 0.4);
   color: #fff;
 }
 
@@ -154,9 +154,9 @@
 }
 
 .dark .enki-catbar-all.active {
-  background: rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+  background: rgba(201, 104, 56, 0.1);
+  border-color: rgba(201, 104, 56, 0.5);
+  box-shadow: 0 0 20px rgba(201, 104, 56, 0.1);
   color: #fff;
 }
 
@@ -232,7 +232,7 @@
 
 .dark .enki-catbar-chip:hover {
   background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(168, 85, 247, 0.4);
+  border-color: rgba(201, 104, 56, 0.4);
   color: #fff;
 }
 
@@ -243,9 +243,9 @@
 }
 
 .dark .enki-catbar-chip.active {
-  background: rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 20px rgba(168, 85, 247, 0.1);
+  background: rgba(201, 104, 56, 0.1);
+  border-color: rgba(201, 104, 56, 0.5);
+  box-shadow: 0 0 20px rgba(201, 104, 56, 0.1);
   color: #fff;
   font-weight: 600;
 }
@@ -300,7 +300,7 @@
 
 .dark .enki-card {
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(201, 104, 56, 0.2);
   background: transparent;
 }
 
@@ -310,8 +310,8 @@
 }
 
 .dark .enki-card:hover {
-  box-shadow: 0 16px 64px rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.6);
+  box-shadow: 0 16px 64px rgba(201, 104, 56, 0.15);
+  border-color: rgba(201, 104, 56, 0.6);
 }
 
 .enki-card-img {
@@ -791,10 +791,10 @@
 .enki-tag-pill {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(168, 85, 247, 0.3);
-  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(201, 104, 56, 0.3);
+  background: rgba(201, 104, 56, 0.1);
   border-radius: 999px;
-  color: #a855f7;
+  color: #c96838;
   font-family: var(--font-jetbrains-mono), monospace;
   font-size: 12px;
   font-weight: 600;
@@ -802,10 +802,10 @@
 }
 
 .dark .enki-tag-pill {
-  background: rgba(168, 85, 247, 0.15);
+  background: rgba(201, 104, 56, 0.15);
   color: #ddb7ff;
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(201, 104, 56, 0.4);
+  box-shadow: 0 0 10px rgba(201, 104, 56, 0.1);
 }
 
 .enki-rule {
@@ -959,7 +959,7 @@
 
 .dark .enki-qc-bar {
   background: rgba(19, 19, 24, 0.98);
-  border: 1px solid rgba(168, 85, 247, 0.4);
+  border: 1px solid rgba(201, 104, 56, 0.4);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
   color: #fff;
 }
@@ -972,8 +972,8 @@
 
 .dark .enki-qc-bar:hover {
   background: rgba(19, 19, 24, 0.85);
-  box-shadow: 0 16px 48px rgba(168, 85, 247, 0.25), inset 0 0 20px rgba(168, 85, 247, 0.1);
-  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow: 0 16px 48px rgba(201, 104, 56, 0.25), inset 0 0 20px rgba(201, 104, 56, 0.1);
+  border-color: rgba(201, 104, 56, 0.4);
 }
 
 .enki-qc-bar-bolt {
@@ -983,10 +983,10 @@
   width: 32px;
   height: 32px;
   border-radius: 999px;
-  background: linear-gradient(135deg, #a855f7 0%, #c026d3 100%);
+  background: linear-gradient(135deg, #c96838 0%, #ea580c 100%);
   color: #fff;
   flex-shrink: 0;
-  box-shadow: 0 0 16px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 16px rgba(201, 104, 56, 0.4);
   margin-left: -12px;
   position: relative;
 }
@@ -1016,8 +1016,8 @@
 
 .dark .enki-qc-panel {
   background: rgba(19, 19, 24, 0.98);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(168, 85, 247, 0.05);
+  border: 1px solid rgba(201, 104, 56, 0.4);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), inset 0 0 40px rgba(201, 104, 56, 0.05);
 }
 
 @keyframes qc-panel-in {
@@ -1056,8 +1056,8 @@
 
 .dark .enki-qc-editor-btn:hover {
   background: rgba(255,255,255,0.1);
-  border-color: rgba(168, 85, 247, 0.4);
-  color: #a855f7;
+  border-color: rgba(201, 104, 56, 0.4);
+  color: #c96838;
 }
 
 .enki-qc-toggle-btn {
@@ -1133,8 +1133,8 @@
 .dark .enki-qc-textarea:focus,
 .dark .enki-qc-var-input:focus,
 .dark .enki-qc-select:focus {
-  border-color: rgba(168, 85, 247, 0.5);
-  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.5), inset 0 2px 4px rgba(0,0,0,0.2);
+  border-color: rgba(201, 104, 56, 0.5);
+  box-shadow: 0 0 0 1px rgba(201, 104, 56, 0.5), inset 0 2px 4px rgba(0,0,0,0.2);
   outline: none;
 }
 

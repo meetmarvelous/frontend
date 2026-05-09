@@ -204,7 +204,7 @@ textarea {
   --sidebar: 240 10% 10%;
   --sidebar-foreground: 260 15% 90%;
   --sidebar-border: 270 20% 15%;
-  --sidebar-primary: 270 100% 65%; /* #a855f7 */
+  --sidebar-primary: 20 57% 50%; /* #c96838 */
   --sidebar-primary-foreground: 0 0% 100%;
   --sidebar-accent: 240 10% 14%;
   --sidebar-accent-foreground: 260 15% 90%;
@@ -220,7 +220,7 @@ textarea {
   
   --muted: 240 10% 14%;
   --muted-foreground: 260 10% 65%;
-  --accent: 270 100% 65%;
+  --accent: 20 57% 50%;
   --accent-foreground: 0 0% 100%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
@@ -229,11 +229,11 @@ textarea {
   --border: 270 20% 15%;
   --ring: 20 57% 50%;
 
-  --chart-1: 270 100% 65%;
-  --chart-2: 295 70% 49%;
+  --chart-1: 20 57% 50%;
+  --chart-2: 35 92% 52%;
   --chart-3: 260 15% 90%;
   --chart-4: 240 10% 10%;
-  --chart-5: 270 100% 65%;
+  --chart-5: 20 57% 50%;
 
   --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0, 0.6);
   --shadow-xs: 0px 1px 3px 0px rgba(0,0,0, 0.7);
