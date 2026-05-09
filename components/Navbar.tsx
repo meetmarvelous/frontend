@@ -167,8 +167,8 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
-            <span style={{ fontFamily: "var(--font-brand)", fontStyle: "normal", fontWeight: 700, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.02em" }}>
-              EnkiArt
+            <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic", fontWeight: 400, fontSize: isMobile ? 22 : 28, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.02em" }}>
+              Enki Art
             </span>
             <span style={{ color: "#c96838", fontSize: 24, lineHeight: 1, marginLeft: 1 }}>.</span>
           </div>
