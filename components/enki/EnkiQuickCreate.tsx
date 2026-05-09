@@ -36,11 +36,8 @@ export default function EnkiQuickCreate() {
       <div className="enki-qc-bar">
         <span className="enki-qc-bar-bolt"><Sparkles size={14} /></span>
         <span style={{ fontFamily: "var(--font-sora), sans-serif", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Quick Create</span>
-        <span className="mono" style={{ color: "var(--enki-ink-3)", fontSize: 11, marginLeft: 8 }}>
-          {open ? "wrap variables in [brackets]" : ""}
-        </span>
 
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
           {/* Prompt Editor button */}
           <button
             onClick={() => router.push("/editor")}

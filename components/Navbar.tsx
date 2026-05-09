@@ -136,11 +136,11 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
         width: "100%",
-        background: isDark ? "rgba(19, 19, 24, 0.75)" : "rgba(255, 255, 255, 0.9)",
-        backdropFilter: "blur(12px) saturate(150%)",
-        WebkitBackdropFilter: "blur(12px) saturate(150%)",
-        borderBottom: isDark ? "1px solid rgba(168, 85, 247, 0.2)" : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 4px 12px rgba(0,0,0,0.05)",
+        background: isDark ? "rgba(10, 10, 12, 0.98)" : "rgba(255, 255, 255, 0.98)",
+        backdropFilter: "blur(64px) saturate(200%)",
+        WebkitBackdropFilter: "blur(64px) saturate(200%)",
+        borderBottom: isDark ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(0,0,0,0.08)",
+        boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.8)" : "0 4px 12px rgba(0,0,0,0.05)",
         borderRadius: 0,
         fontFamily: "var(--font-sora), 'Sora', sans-serif",
       }}>
