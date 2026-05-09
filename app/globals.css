@@ -194,84 +194,59 @@ textarea {
 }
 
 .dark {
-  --button-outline: rgba(255, 255, 255, 0.1);
-  --badge-outline: rgba(255, 255, 255, 0.05);
-  --opaque-button-border-intensity: 9;
-  --elevate-1: rgba(255, 255, 255, 0.04);
-  --elevate-2: rgba(255, 255, 255, 0.09);
-  --background: 200 88% 13%;
-  --foreground: 45 45% 96%;
-  --border: 196 22% 24%;
-  --card: 200 62% 16%;
-  --card-foreground: 45 45% 96%;
-  --card-border: 196 22% 24%;
-  --sidebar: 200 70% 14%;
-  --sidebar-foreground: 45 45% 96%;
-  --sidebar-border: 196 22% 24%;
-  --sidebar-primary: 184 60% 52%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 200 62% 16%;
-  --sidebar-accent-foreground: 0 0% 96%;
-  --sidebar-ring: 184 70% 52%;
-  --popover: 200 62% 16%;
-  --popover-foreground: 0 0% 96%;
-  --popover-border: 196 22% 24%;
-  --primary: 41 47% 56%;
-  --primary-foreground: 192 78% 9%;
-  --secondary: 192 40% 13%;
-  --secondary-foreground: 45 45% 96%;
-  --muted: 192 34% 13%;
-  --muted-foreground: 45 16% 78%;
-  --accent: 192 34% 13%;
-  --accent-foreground: 45 45% 96%;
+  --button-outline: rgba(255, 255, 255, 0.12);
+  --badge-outline: rgba(255, 255, 255, 0.1);
+  --opaque-button-border-intensity: 10;
+  --elevate-1: rgba(255, 255, 255, 0.05);
+  --elevate-2: rgba(255, 255, 255, 0.08);
+  --background: 0 0% 4%; /* Very dark gray, almost black */
+  --foreground: 0 0% 98%; /* Clean crisp white */
+  --border: 0 0% 12%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 98%;
+  --card-border: 0 0% 12%;
+  --sidebar: 0 0% 5%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-border: 0 0% 12%;
+  --sidebar-primary: 0 0% 98%;
+  --sidebar-primary-foreground: 0 0% 4%;
+  --sidebar-accent: 0 0% 10%;
+  --sidebar-accent-foreground: 0 0% 98%;
+  --sidebar-ring: 0 0% 100%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 98%;
+  --popover-border: 0 0% 12%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 4%;
+  --secondary: 0 0% 10%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 10%;
+  --muted-foreground: 0 0% 60%;
+  --accent: 0 0% 12%;
+  --accent-foreground: 0 0% 98%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --input: 196 22% 24%;
-  --ring: 184 70% 52%;
+  --input: 0 0% 12%;
+  --ring: 0 0% 100%;
   --chart-1: 41 47% 56%;
   --chart-2: 192 65% 40%;
   --chart-3: 45 45% 96%;
   --chart-4: 200 88% 13%;
   --chart-5: 41 47% 56%;
-  --shadow-2xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0px 2px 0px 0px hsl(0 0% 0% / 0.08);
-  --shadow-sm:
-    0px 2px 0px 0px hsl(0 0% 0% / 0.1), 0px 1px 2px -1px hsl(0 0% 0% / 0.15);
-  --shadow:
-    0px 2px 0px 0px hsl(0 0% 0% / 0.12), 0px 1px 2px -1px hsl(0 0% 0% / 0.18);
-  --shadow-md:
-    0px 2px 0px 0px hsl(0 0% 0% / 0.15), 0px 2px 4px -1px hsl(0 0% 0% / 0.2);
-  --shadow-lg:
-    0px 2px 0px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.25);
-  --shadow-xl:
-    0px 2px 0px 0px hsl(0 0% 0% / 0.2), 0px 8px 10px -1px hsl(0 0% 0% / 0.3);
-  --shadow-2xl: 0px 2px 0px 0px hsl(0 0% 0% / 0.25);
+  --shadow-2xs: 0px 1px 2px 0px rgba(0,0,0, 0.5);
+  --shadow-xs: 0px 1px 3px 0px rgba(0,0,0, 0.6);
+  --shadow-sm: 0px 2px 4px 0px rgba(0,0,0, 0.7);
+  --shadow: 0px 4px 8px 0px rgba(0,0,0, 0.7);
+  --shadow-md: 0px 8px 16px 0px rgba(0,0,0, 0.8);
+  --shadow-lg: 0px 12px 24px 0px rgba(0,0,0, 0.8);
+  --shadow-xl: 0px 20px 40px 0px rgba(0,0,0, 0.9);
+  --shadow-2xl: 0px 24px 48px 0px rgba(0,0,0, 0.95);
 
-  --app-bg:
-    radial-gradient(
-      1400px 900px at 50% -25%,
-      rgba(0, 0, 0, 0.55),
-      transparent 62%
-    ),
-    radial-gradient(
-      1000px 700px at 85% 0%,
-      rgba(14, 116, 110, 0.2),
-      transparent 60%
-    ),
-    radial-gradient(
-      900px 700px at 12% 12%,
-      rgba(56, 189, 170, 0.08),
-      transparent 55%
-    ),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.018), transparent 42%);
+  --app-bg: hsl(var(--background));
 
-  --panel-bg: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.035),
-    rgba(255, 255, 255, 0.015)
-  );
-  --panel-hairline: rgba(56, 189, 170, 0.1);
-  --panel-hairline-soft: rgba(255, 255, 255, 0.045);
+  --panel-bg: linear-gradient(to bottom, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+  --panel-hairline: rgba(255, 255, 255, 0.08);
+  --panel-hairline-soft: rgba(255, 255, 255, 0.03);
 
   /* Fallback for older browsers */
   --sidebar-primary-border: hsl(var(--sidebar-primary));

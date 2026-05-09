@@ -13,6 +13,19 @@
   background: var(--enki-paper);
   color: var(--enki-ink);
   font-family: var(--font-inter), var(--font-outfit), system-ui, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark .enki {
+  --enki-paper: #0a0a0a;
+  --enki-paper-2: #141414;
+  --enki-paper-3: #1f1f1f;
+  --enki-ink: #f0f0f0;
+  --enki-ink-2: #a3a3a3;
+  --enki-ink-3: #737373;
+  --enki-rule: #262626;
+  --enki-rule-2: #333333;
+  --enki-ember: #e05a2b;
 }
 
 .enki .serif {
