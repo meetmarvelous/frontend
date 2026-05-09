@@ -139,10 +139,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
         background: isDark ? "rgba(10, 10, 12, 0.98)" : "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(64px) saturate(200%)",
         WebkitBackdropFilter: "blur(64px) saturate(200%)",
-        borderBottom: isDark ? "1px solid rgba(168, 85, 247, 0.3)" : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.8)" : "0 4px 12px rgba(0,0,0,0.05)",
-        borderRadius: 0,
-        fontFamily: "var(--font-sora), 'Sora', sans-serif",
+        fontFamily: "var(--font-instrument-serif), serif",
       }}>
         <div style={{ padding: isMobile ? "0 12px" : "0 8px 0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           
@@ -170,10 +167,10 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
-            <span style={{ fontFamily: "var(--font-sora), 'Sora', sans-serif", fontStyle: "italic", fontWeight: 800, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.04em" }}>
+            <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic", fontWeight: 800, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.04em" }}>
               EnkiArt
             </span>
-            <span style={{ color: "#a855f7", fontSize: 24, lineHeight: 1, marginLeft: 1 }}>.</span>
+            <span style={{ color: "#c96838", fontSize: 24, lineHeight: 1, marginLeft: 1 }}>.</span>
           </div>
 
           {!isMobile && (
@@ -250,7 +247,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                 <button onClick={() => router.push("/editor")} style={{
                   display: "flex", alignItems: "center", gap: 6,
                   padding: "0 20px", height: 36, 
-                  background: isDark ? "linear-gradient(135deg, #a855f7 0%, #c026d3 100%)" : "#111",
+                  background: isDark ? "linear-gradient(135deg, #c96838 0%, #ea580c 100%)" : "#111",
                   color: "#fff",
                   border: "none", borderRadius: 8, cursor: "pointer",
                   fontSize: 12, fontWeight: 600, fontFamily: "var(--font-geist-sans), sans-serif", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap",

@@ -25,7 +25,7 @@
   --enki-ink-3: #737373;
   --enki-rule: #27272b;
   --enki-rule-2: #3f3f46;
-  --enki-ember: #a855f7;
+  --enki-ember: #c96838;
 }
 
 .enki .serif {
@@ -1035,7 +1035,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--enki-ink);
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-instrument-serif), serif;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1095,7 +1095,7 @@
   display: flex;
   justify-content: center;
   color: var(--enki-ink-3);
-  font-family: var(--font-sora), sans-serif;
+  font-family: var(--font-instrument-serif), serif;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.12em;

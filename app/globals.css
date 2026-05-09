@@ -98,7 +98,7 @@ textarea {
   --chart-4: 190 30% 12%;
   --chart-5: 41 47% 56%;
   --font-sans: var(--font-geist-sans), Inter, sans-serif;
-  --font-serif: var(--font-sora), "Playfair Display", Georgia, serif;
+  --font-serif: var(--font-instrument-serif), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), JetBrains Mono, monospace;
   --radius: 0.5rem;
   --shadow-2xs: 0px 2px 0px 0px hsl(240 6% 10% / 0.02);
@@ -213,9 +213,9 @@ textarea {
   --popover-foreground: 260 15% 90%;
   --popover-border: 270 20% 15%;
   
-  --primary: 270 100% 65%; /* #a855f7 */
+  --primary: 20 57% 50%; /* #c96838 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 295 70% 49%; /* #c026d3 */
+  --secondary: 35 92% 52%; /* #f59e0b - orange-500 */
   --secondary-foreground: 0 0% 100%;
   
   --muted: 240 10% 14%;
@@ -227,7 +227,7 @@ textarea {
   
   --input: 240 10% 14%;
   --border: 270 20% 15%;
-  --ring: 270 100% 65%;
+  --ring: 20 57% 50%;
 
   --chart-1: 270 100% 65%;
   --chart-2: 295 70% 49%;
@@ -246,7 +246,7 @@ textarea {
 
   --app-bg: hsl(var(--background));
   --panel-bg: hsl(var(--card));
-  --panel-hairline: rgba(168, 85, 247, 0.15); /* violet stroke */
+  --panel-hairline: rgba(201, 104, 56, 0.15); /* orange stroke */
   --panel-hairline-soft: rgba(255, 255, 255, 0.02);
 
 
