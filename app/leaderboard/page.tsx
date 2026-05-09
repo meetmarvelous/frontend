@@ -4,9 +4,9 @@ import { useState } from "react";
 type LbTab = "generations" | "earnings";
 
 const MOCK_GENERATIONS = [
-  { rank: 1, handle: "@pixel_sage",    avatar: "PS", gens: 14820, change: +340, badge: "👑" },
-  { rank: 2, handle: "@lune_lab",      avatar: "LL", gens: 11203, change: +120, badge: "🥈" },
-  { rank: 3, handle: "@driftwood",     avatar: "DW", gens: 9870,  change: -55,  badge: "🥉" },
+  { rank: 1, handle: "@pixel_sage",    avatar: "PS", gens: 14820, change: +340, badge: "👑", bestPrompt: "A photograph of [subject] at [location], cinematic lighting, 8k resolution" },
+  { rank: 2, handle: "@lune_lab",      avatar: "LL", gens: 11203, change: +120, badge: "🥈", bestPrompt: "Macro photography of [insect] on a [flower] leaf, morning dew, f/2.8" },
+  { rank: 3, handle: "@driftwood",     avatar: "DW", gens: 9870,  change: -55,  badge: "🥉", bestPrompt: "Cyberpunk cityscape with [vehicle] flying past neon signs, raining" },
   { rank: 4, handle: "@nxrthx",        avatar: "NX", gens: 7654,  change: +88,  badge: "" },
   { rank: 5, handle: "@solarpunk_io",  avatar: "SP", gens: 5430,  change: +12,  badge: "" },
   { rank: 6, handle: "@artnomad",      avatar: "AN", gens: 4210,  change: -30,  badge: "" },
@@ -17,9 +17,9 @@ const MOCK_GENERATIONS = [
 ];
 
 const MOCK_EARNINGS = [
-  { rank: 1, handle: "@pixel_sage",    avatar: "PS", earned: "$4,320", prompts: 12, change: +210, badge: "👑" },
-  { rank: 2, handle: "@solarpunk_io",  avatar: "SP", earned: "$3,180", prompts: 8,  change: +80,  badge: "🥈" },
-  { rank: 3, handle: "@mossglow",      avatar: "MG", earned: "$2,450", prompts: 5,  change: -40,  badge: "🥉" },
+  { rank: 1, handle: "@pixel_sage",    avatar: "PS", earned: "$4,320", prompts: 12, change: +210, badge: "👑", bestPrompt: "A photograph of [subject] at [location], cinematic lighting, 8k resolution" },
+  { rank: 2, handle: "@solarpunk_io",  avatar: "SP", earned: "$3,180", prompts: 8,  change: +80,  badge: "🥈", bestPrompt: "Vintage polaroid of [subject] posing in [outfit], warm tones, light leaks" },
+  { rank: 3, handle: "@mossglow",      avatar: "MG", earned: "$2,450", prompts: 5,  change: -40,  badge: "🥉", bestPrompt: "Minimalist logo design for [company], [color] gradient, clean vector art" },
   { rank: 4, handle: "@lune_lab",      avatar: "LL", earned: "$1,920", prompts: 9,  change: +120, badge: "" },
   { rank: 5, handle: "@artnomad",      avatar: "AN", earned: "$1,340", prompts: 4,  change: +30,  badge: "" },
   { rank: 6, handle: "@driftwood",     avatar: "DW", earned: "$890",   prompts: 7,  change: -15,  badge: "" },
@@ -121,11 +121,21 @@ export default function LeaderboardPage() {
                       {row.badge || `#${row.rank}`}
                     </td>
                     <td style={{ padding: "14px 20px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, fontFamily: "monospace", color: "#374151" }}>
-                          {row.avatar}
-                        </div>
-                        <span style={{ fontSize: 14, fontWeight: isTop3 ? 700 : 400, color: "#111" }}>{row.handle}</span>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <a href={`/profile/${row.handle.replace('@', '')}`} style={{ fontSize: 14, fontWeight: isTop3 ? 700 : 500, color: "#111", textDecoration: "none", width: "fit-content" }} onMouseOver={e => e.currentTarget.style.textDecoration = 'underline'} onMouseOut={e => e.currentTarget.style.textDecoration = 'none'}>
+                          {row.handle}
+                        </a>
+                        {isTop3 && (row as any).bestPrompt && (
+                          <div style={{ marginTop: 6, padding: "10px 12px", background: "#f9fafb", borderRadius: 8, border: "1px solid #e5e7eb", maxWidth: 320 }}>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "#6b7280", letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 6 }}>Best Prompt</div>
+                            <div style={{ fontSize: 12, color: "#374151", marginBottom: 8, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", fontFamily: "var(--font-outfit), 'Outfit', sans-serif" }}>
+                              {(row as any).bestPrompt}
+                            </div>
+                            <a href={`/editor?prompt=${encodeURIComponent((row as any).bestPrompt)}`} style={{ display: "inline-flex", background: "#111", border: "none", padding: "4px 10px", fontSize: 11, color: "#fff", fontWeight: 600, borderRadius: 6, cursor: "pointer", textDecoration: "none" }}>
+                              Use this prompt →
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td style={{ padding: "14px 20px", fontFamily: "monospace", fontSize: 14, fontWeight: 600, color: "#111" }}>
