@@ -710,22 +710,22 @@ export default function AlgencyPromptEditor() {
 
       {/* ═══ PROMPT TITLE HEADER ═══ */}
       <div style={{
-        padding: "2px 16px",
+        padding: "10px 24px 12px",
         background: "var(--alg-bg)",
         borderBottom: "1px solid var(--alg-border)",
         display: "flex",
         flexDirection: "column",
-        gap: "4px",
+        gap: "2px",
         alignItems: "flex-start",
         flexShrink: 0
       }}>
         <span style={{
           fontSize: "9px",
           fontWeight: 700,
-          letterSpacing: "1px",
+          letterSpacing: "1.5px",
           color: "var(--alg-hint)",
           textTransform: "uppercase",
-          fontFamily: "var(--font-outfit), 'Outfit', sans-serif"
+          fontFamily: "var(--font-inter), sans-serif"
         }}>
           Prompt Title
         </span>
@@ -735,18 +735,44 @@ export default function AlgencyPromptEditor() {
           placeholder="Untitled Prompt"
           style={{
             width: "100%",
-            fontSize: "clamp(18px, 1vw + 4px, 20px)",
-            fontFamily: "var(--font-serif), 'Playfair Display', serif",
-            fontWeight: 500,
+            fontSize: "clamp(24px, 2vw + 12px, 34px)",
+            fontFamily: "var(--font-instrument-serif), 'Instrument Serif', serif",
+            fontStyle: "italic",
+            fontWeight: 400,
             color: "var(--alg-dark)",
             background: "transparent",
             border: "none",
             outline: "none",
             padding: 0,
             margin: 0,
-            lineHeight: "normal"
+            lineHeight: "1.2",
+            letterSpacing: "-0.01em",
           }}
         />
+      </div>
+
+      {/* ═══ 4-STEP WIZARD BAR ═══ */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "0 24px",
+        height: 40,
+        background: "var(--alg-panel)",
+        borderBottom: "1px solid var(--alg-border)",
+        flexShrink: 0,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: "var(--font-inter), sans-serif", fontSize: 12, color: "var(--alg-muted)" }}>
+          {["01 Settings", "02 Prompt", "03 Variables", "04 Verify"].map((step, i) => (
+            <>
+              <span key={step} style={{ color: "var(--alg-text)", fontWeight: 500 }}>{step}</span>
+              {i < 3 && <span key={`sep-${i}`} style={{ color: "var(--alg-border)", fontWeight: 300, fontSize: 14 }}>•</span>}
+            </>
+          ))}
+        </div>
+        <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 11, color: "var(--alg-hint)", letterSpacing: 0.5 }}>
+          {verifiedCount}/1 req · 4 rec
+        </span>
       </div>
 
       {/* ═══ 4-COLUMN GRID ═══ */}
@@ -1214,58 +1240,67 @@ export default function AlgencyPromptEditor() {
           </div>
 
           {/* Prompt Ownership Notice */}
-          <div style={{ padding: "12px", background: "#fffaf0", borderTop: "1px solid #f5e6cc", borderBottom: "1px solid #f5e6cc" }}>
+          <div style={{
+            padding: "12px 14px",
+            background: "var(--alg-white)",
+            borderTop: "1px solid var(--alg-border)",
+            borderBottom: "1px solid var(--alg-border)",
+            flexShrink: 0,
+          }}>
             <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-              <AlertTriangle size={18} style={{ color: "#b8860b", marginTop: "2px", flexShrink: 0 }} />
-              <p style={{ fontSize: "clamp(11px, 0.7vw + 5px, 12px)", fontFamily: "var(--font-outfit), 'Outfit', sans-serif", color: "#8a6d3b", lineHeight: 1.5, margin: 0 }}>
-                <strong>Ownership Notice:</strong> Only mark prompts as your own property if you genuinely created them. We will be rolling out methods to verify prompt originality. Falsely claiming authorship will be flagged and may result in strikes against your account. See Terms of Service.
-              </p>
+              <AlertTriangle size={15} style={{ color: "var(--alg-muted)", marginTop: "1px", flexShrink: 0 }} />
+              <div>
+                <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", fontWeight: 700, color: "var(--alg-text)", margin: "0 0 2px" }}>Ownership Notice</p>
+                <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", color: "var(--alg-muted)", lineHeight: 1.5, margin: 0 }}>
+                  Free prompts need to allow variahses an copy and remix it.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Consolidated Action Bar */}
-          <div style={{ background: "var(--alg-warm-white)", borderTop: "1px solid var(--alg-border)", padding: "10px 12px", zIndex: 10, marginTop: "auto" }}>
+          <div style={{ background: "var(--alg-bg)", borderTop: "1px solid var(--alg-border)", padding: "10px 14px", zIndex: 10, marginTop: "auto", flexShrink: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {/* Cost summary */}
               {versions.some(v => v.status === "idle" || v.status === "failed") && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "var(--alg-panel)", border: "1px solid var(--alg-border)" }}>
-                  <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(9px, 0.6vw + 6px, 12px)", color: "var(--alg-muted)", letterSpacing: 1, textTransform: "uppercase" }}>Batch cost</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(12px, 0.8vw + 8px, 16px)", fontWeight: 700, color: "var(--alg-dark)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 10px", background: "var(--alg-panel)", border: "1px solid var(--alg-border)", borderRadius: 6 }}>
+                  <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, color: "var(--alg-muted)", letterSpacing: 1.5, textTransform: "uppercase" }}>Batch Cost</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 13, fontWeight: 700, color: "var(--alg-dark)" }}>
                       {getBatchCost(Math.max(versions.filter(v => v.status === "idle" || v.status === "failed").length, variables.filter(v => v.type === "text").length > 0 ? Math.max(...variables.filter(v => v.type === "text").map(v => v.values.length || 1)) : 1))}
                     </span>
-                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(9px, 0.5vw + 6px, 11px)", color: "var(--alg-hint)" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, color: "var(--alg-hint)" }}>
                       via {solanaConnected ? "Solana" : "Thirdweb"} x402
                     </span>
                   </div>
                 </div>
               )}
               {/* Action Buttons Row */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
                 <button
                   className="alg-btn alg-btn--ghost alg-btn--sm"
-                  style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 6px", color: "var(--alg-muted)", fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, whiteSpace: "nowrap" }}
+                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", color: "var(--alg-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: 11, whiteSpace: "nowrap", borderRadius: 6 }}
                   onClick={handleGrokFill}
                   disabled={ui.isGrokFilling}
                 >
-                  <Sparkles size={10} />
+                  <Sparkles size={12} />
                   {ui.isGrokFilling ? "Filling..." : "Auto Fill"}
                 </button>
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button
                     className="alg-pay-btn"
                     onClick={handlePayAndGenerate}
                     disabled={isGeneratingPaymentPending || versions.filter(v => v.status === "idle" || v.status === "failed").length === 0}
-                    style={{ padding: "6px 8px", height: "auto", whiteSpace: "nowrap", fontSize: 9 }}
+                    style={{ padding: "8px 14px", height: "auto", whiteSpace: "nowrap", fontSize: 11, borderRadius: 6 }}
                   >
                     {isGeneratingPaymentPending ? (
                       <>● Processing...</>
                     ) : (
                       <>
-                        <Zap size={10} />
+                        <Zap size={11} />
                         Pay &amp; Gen
                         {versions.filter(v => v.status === "idle" || v.status === "failed").length > 0 && (
-                          <span style={{ marginLeft: 4, opacity: 0.6, fontWeight: 400, fontSize: 8 }}>
+                          <span style={{ marginLeft: 4, opacity: 0.6, fontWeight: 400, fontSize: 9 }}>
                             ({versions.filter(v => v.status === "idle" || v.status === "failed").length})
                           </span>
                         )}
@@ -1273,8 +1308,8 @@ export default function AlgencyPromptEditor() {
                     )}
                   </button>
                   <button
-                    className="alg-btn alg-btn--primary alg-btn--sm"
-                    style={{ padding: "6px 8px", background: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", borderColor: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", color: "white", opacity: 1, cursor: isPublishDisabled ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
+                    className="alg-btn alg-btn--sm"
+                    style={{ padding: "8px 14px", background: isPublishDisabled ? "var(--alg-disabled-bg)" : "var(--alg-dark)", border: "none", color: "white", opacity: 1, cursor: isPublishDisabled ? "not-allowed" : "pointer", whiteSpace: "nowrap", borderRadius: 6, fontSize: 11, fontFamily: "var(--font-inter), sans-serif", fontWeight: 600 }}
                     disabled={isPublishDisabled}
                   >
                     Publish
