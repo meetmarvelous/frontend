@@ -37,8 +37,10 @@
 }
 
 .enki-page-title {
-  padding: 96px 40px 22px;
+  padding: 96px 24px 22px;
   border-bottom: 1px solid var(--enki-rule);
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .enki-page-eyebrow {
@@ -75,9 +77,9 @@
 .enki-catbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 5px 0;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 5px 24px;
   background: transparent;
   border: none;
   border-radius: 0;
@@ -87,6 +89,8 @@
   left: 0;
   right: 0;
   width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
   z-index: 45;
   pointer-events: all;
   opacity: 1;
@@ -279,8 +283,10 @@
 
 .enki-masonry {
   column-count: var(--cols, 4);
-  column-gap: 4px;
-  padding: 8px 0 90px;
+  column-gap: 16px;
+  padding: 8px 24px 90px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 
@@ -1157,7 +1163,9 @@
 
 .enki-empty-state,
 .enki-account {
-  padding: 28px 40px 90px;
+  padding: 28px 24px 90px;
+  max-width: 1440px;
+  margin: 0 auto;
 }
 
 .enki-account-grid {
