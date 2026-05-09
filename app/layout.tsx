@@ -7,6 +7,7 @@ import {
   Outfit,
   Sora,
   Instrument_Serif,
+  Playfair_Display,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "../providers";
@@ -44,6 +45,12 @@ const instrumentSerif = Instrument_Serif({
   variable: "--font-instrument-serif",
   subsets: ["latin"],
   weight: ["400"],
+});
+
+const playfairDisplay = Playfair_Display({
+  variable: "--font-playfair-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const outfit = Outfit({
@@ -136,7 +143,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${sora.variable} ${instrumentSerif.variable} ${outfit.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${sora.variable} ${instrumentSerif.variable} ${playfairDisplay.variable} ${outfit.variable} antialiased`}
       >
         <Providers>
           <Navbar />

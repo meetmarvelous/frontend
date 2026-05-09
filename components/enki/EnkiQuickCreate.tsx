@@ -35,7 +35,7 @@ export default function EnkiQuickCreate() {
       {/* Pill bar — always visible */}
       <div className="enki-qc-bar">
         <span className="enki-qc-bar-bolt"><Sparkles size={14} /></span>
-        <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em" }}>Quick Create</span>
+        <span style={{ fontFamily: "var(--font-brand)", fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em" }}>Quick Create</span>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
           {/* Prompt Editor button */}

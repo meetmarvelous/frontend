@@ -139,7 +139,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
         background: isDark ? "rgba(10, 10, 12, 0.98)" : "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(64px) saturate(200%)",
         WebkitBackdropFilter: "blur(64px) saturate(200%)",
-        fontFamily: "var(--font-instrument-serif), serif",
+        fontFamily: "var(--font-sans)",
       }}>
         <div style={{ padding: isMobile ? "0 12px" : "0 8px 0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           
@@ -167,7 +167,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
-            <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic", fontWeight: 800, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.04em" }}>
+            <span style={{ fontFamily: "var(--font-brand)", fontStyle: "normal", fontWeight: 700, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.02em" }}>
               EnkiArt
             </span>
             <span style={{ color: "#c96838", fontSize: 24, lineHeight: 1, marginLeft: 1 }}>.</span>
