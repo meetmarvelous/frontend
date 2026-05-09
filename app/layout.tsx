@@ -2,11 +2,10 @@ import type { Metadata } from "next";
 import {
   Geist,
   Geist_Mono,
-  Playfair_Display,
   Inter,
   JetBrains_Mono,
-  Cormorant_Garamond,
   Outfit,
+  Sora,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "../providers";
@@ -34,16 +33,10 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
-const playfairDisplay = Playfair_Display({
-  variable: "--font-serif",
+const sora = Sora({
+  variable: "--font-sora",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const cormorantGaramond = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700", "800"],
 });
 
 const outfit = Outfit({
@@ -136,7 +129,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${playfairDisplay.variable} ${cormorantGaramond.variable} ${outfit.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${sora.variable} ${outfit.variable} antialiased`}
       >
         <Providers>
           <Navbar />

@@ -134,16 +134,16 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   return (
     <>
       <header style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-        width: "100%",
-        background: isDark ? "rgba(13, 13, 13, 0.86)" : "rgba(255, 255, 255, 0.9)",
-        backdropFilter: "blur(24px) saturate(200%)",
-        WebkitBackdropFilter: "blur(24px) saturate(200%)",
-        border: "none",
-        borderBottom: isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.08)",
-        boxShadow: "none",
-        borderRadius: 0,
-        fontFamily: "var(--font-outfit), 'Outfit', sans-serif",
+        position: "fixed", top: isMobile ? 12 : 24, left: "50%", transform: "translateX(-50%)", zIndex: 50,
+        width: isMobile ? "calc(100% - 24px)" : "calc(100% - 48px)",
+        maxWidth: 1440,
+        background: isDark ? "rgba(19, 19, 24, 0.75)" : "rgba(255, 255, 255, 0.9)",
+        backdropFilter: "blur(40px) saturate(200%)",
+        WebkitBackdropFilter: "blur(40px) saturate(200%)",
+        border: isDark ? "1px solid rgba(168, 85, 247, 0.2)" : "1px solid rgba(0,0,0,0.08)",
+        boxShadow: isDark ? "0 8px 32px rgba(0,0,0,0.4)" : "0 4px 12px rgba(0,0,0,0.05)",
+        borderRadius: 16,
+        fontFamily: "var(--font-sora), 'Sora', sans-serif",
       }}>
         <div style={{ padding: isMobile ? "0 12px" : "0 8px 0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           
@@ -171,10 +171,10 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
-            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontStyle: "italic", fontWeight: 700, fontSize: isMobile ? 17 : 19, color: isDark ? "#f7f2eb" : "#111" }}>
-              Enki Art
+            <span style={{ fontFamily: "var(--font-sora), 'Sora', sans-serif", fontStyle: "italic", fontWeight: 800, fontSize: isMobile ? 18 : 22, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.04em" }}>
+              EnkiArt
             </span>
-            <span style={{ color: "#d94f3d", fontSize: 22, lineHeight: 1, marginLeft: 1 }}>·</span>
+            <span style={{ color: "#a855f7", fontSize: 24, lineHeight: 1, marginLeft: 1 }}>.</span>
           </div>
 
           {!isMobile && (
@@ -250,13 +250,22 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                 </button>
                 <button onClick={() => router.push("/editor")} style={{
                   display: "flex", alignItems: "center", gap: 6,
-                  padding: "0 20px", height: 40, background: "#111", color: "#fff",
-                  border: "none", borderRadius: 999, cursor: "pointer",
-                  fontSize: 13, fontWeight: 500, fontFamily: "inherit", whiteSpace: "nowrap",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.1)", transition: "transform 0.2s ease",
+                  padding: "0 20px", height: 36, 
+                  background: isDark ? "linear-gradient(135deg, #a855f7 0%, #c026d3 100%)" : "#111",
+                  color: "#fff",
+                  border: "none", borderRadius: 8, cursor: "pointer",
+                  fontSize: 12, fontWeight: 600, fontFamily: "var(--font-geist-sans), sans-serif", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap",
+                  boxShadow: isDark ? "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 14px rgba(168, 85, 247, 0.25)" : "0 2px 10px rgba(0,0,0,0.1)", 
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}>
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.02)";
+                  if (isDark) e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.3), 0 6px 20px rgba(168, 85, 247, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  if (isDark) e.currentTarget.style.boxShadow = "inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 14px rgba(168, 85, 247, 0.25)";
+                }}>
                   Release prompt
                 </button>
               </div>
