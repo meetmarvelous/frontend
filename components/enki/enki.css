@@ -787,11 +787,23 @@
 }
 
 .enki-tag-pill {
-  border: 1px solid var(--enki-rule);
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.1);
   border-radius: 999px;
-  color: var(--enki-ink-2);
+  color: #a855f7;
+  font-family: var(--font-jetbrains-mono), monospace;
   font-size: 12px;
-  padding: 6px 10px;
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
+.dark .enki-tag-pill {
+  background: rgba(168, 85, 247, 0.15);
+  color: #ddb7ff;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.1);
 }
 
 .enki-rule {
@@ -995,9 +1007,15 @@
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   border-radius: 16px;
-  padding: 14px 18px 16px;
-  margin-bottom: 8px;
+  padding: 18px 24px 20px;
+  margin-bottom: 12px;
   animation: qc-panel-in 0.18s ease;
+}
+
+.dark .enki-qc-panel {
+  background: rgba(19, 19, 24, 0.75);
+  border: 1px solid rgba(168, 85, 247, 0.25);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(168, 85, 247, 0.05);
 }
 
 @keyframes qc-panel-in {
@@ -1073,12 +1091,18 @@
 
 .enki-qc-section-label {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   color: var(--enki-ink-3);
-  font-size: 11px;
+  font-family: var(--font-sora), sans-serif;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+}
+
+.dark .enki-qc-section-label {
+  color: rgba(255,255,255,0.7);
 }
 
 .enki-qc-textarea,
@@ -1088,7 +1112,28 @@
   border: 1px solid var(--enki-rule);
   background: var(--enki-paper);
   color: var(--enki-ink);
-  padding: 10px 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: var(--font-geist-sans), sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: all 0.2s ease;
+}
+
+.dark .enki-qc-textarea,
+.dark .enki-qc-var-input,
+.dark .enki-qc-select {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.dark .enki-qc-textarea:focus,
+.dark .enki-qc-var-input:focus,
+.dark .enki-qc-select:focus {
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.5), inset 0 2px 4px rgba(0,0,0,0.2);
+  outline: none;
 }
 
 .enki-qc-textarea {
