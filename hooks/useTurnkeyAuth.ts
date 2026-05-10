@@ -9,16 +9,46 @@ import { Turnkey } from "@turnkey/sdk-browser";
 /**
  * Reads / writes the Turnkey email wallet address stored in localStorage
  * after a successful OTP login via /api/auth/turnkey/verify.
+ *
+ * Each component that calls this hook gets its own React state. To keep all
+ * instances (Navbar, editor, settings, payment hook, etc.) in sync after a
+ * login or logout, every mutation dispatches a window event and every instance
+ * listens for it and re-reads localStorage.
  */
+const TURNKEY_AUTH_EVENT = "turnkey-email-auth-changed";
+
+function readTurnkeyAuth() {
+  if (typeof window === "undefined") {
+    return { address: null as string | null, subOrgId: null as string | null, sessionToken: null as string | null };
+  }
+  return {
+    address: localStorage.getItem("turnkey_wallet_address"),
+    subOrgId: localStorage.getItem("turnkey_sub_org_id"),
+    sessionToken: localStorage.getItem("turnkey_session_token"),
+  };
+}
+
 export function useTurnkeyEmailAuth() {
   const [address, setAddress] = useState<string | null>(null);
   const [subOrgId, setSubOrgId] = useState<string | null>(null);
   const [sessionToken, setSessionToken] = useState<string | null>(null);
 
   useEffect(() => {
-    setAddress(localStorage.getItem("turnkey_wallet_address"));
-    setSubOrgId(localStorage.getItem("turnkey_sub_org_id"));
-    setSessionToken(localStorage.getItem("turnkey_session_token"));
+    const sync = () => {
+      const next = readTurnkeyAuth();
+      setAddress(next.address);
+      setSubOrgId(next.subOrgId);
+      setSessionToken(next.sessionToken);
+    };
+    sync();
+    window.addEventListener(TURNKEY_AUTH_EVENT, sync);
+    // Also pick up cross-tab updates — `storage` only fires in OTHER tabs, not
+    // the originating tab; combined with our custom event this covers both.
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(TURNKEY_AUTH_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
   }, []);
 
   const set = (addr: string, orgId: string, token?: string) => {
@@ -28,6 +58,7 @@ export function useTurnkeyEmailAuth() {
     setAddress(addr);
     setSubOrgId(orgId);
     if (token) setSessionToken(token);
+    window.dispatchEvent(new Event(TURNKEY_AUTH_EVENT));
   };
 
   const clear = () => {
@@ -37,10 +68,11 @@ export function useTurnkeyEmailAuth() {
     setAddress(null);
     setSubOrgId(null);
     setSessionToken(null);
+    window.dispatchEvent(new Event(TURNKEY_AUTH_EVENT));
   };
 
   const getAuthHeaders = (): Record<string, string> | null => {
-    const token = sessionToken || localStorage.getItem("turnkey_session_token");
+    const token = sessionToken || (typeof window !== "undefined" ? localStorage.getItem("turnkey_session_token") : null);
     return token ? { "X-Session-Token": token } : null;
   };
 

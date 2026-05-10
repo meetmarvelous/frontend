@@ -54,11 +54,13 @@ html.dark {
 
 /* ─── Page ─── */
 .alg-page {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  /* top: 64px → leave room for the global Navbar (height 64) so its profile button
+     and dropdown remain clickable. The wrapping div in app/editor/page.tsx is also
+     fixed inset:0 z:100, but .alg-page positions itself directly against the viewport. */
+  position: fixed; top: 64px; left: 0; right: 0; bottom: 0;
   background: var(--alg-bg);
   display: flex;
   flex-direction: column;
-  padding-top: 56px;
   box-sizing: border-box;
   overflow: hidden;
   font-family: var(--font-inter), Inter, system-ui, sans-serif;

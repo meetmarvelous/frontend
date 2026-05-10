@@ -11,7 +11,7 @@
  * Requires a Solana wallet connected via @solana/wallet-adapter-react.
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   PublicKey,
@@ -26,6 +26,8 @@ import {
 } from "@solana/spl-token";
 import type { ChainKey } from "@/lib/payment-config";
 import { PAYMENT_CHAINS } from "@/lib/payment-config";
+import { useTurnkeySolanaSigner } from "@/hooks/useTurnkeySolanaSigner";
+import { requestPaymentConfirm } from "@/lib/payment-confirm";
 
 const EXPECTED_SOLANA_PLATFORM_WALLET = process.env.NEXT_PUBLIC_SOLANA_PLATFORM_WALLET;
 
@@ -71,9 +73,22 @@ function encodePaymentHeader(signature: string, buyerAddress: string, network: s
 
 export function useSolanaX402Payment() {
   const { connection } = useConnection();
-  const { publicKey, signTransaction } = useWallet();
+  const { publicKey: adapterPublicKey, signTransaction: adapterSignTransaction } = useWallet();
+  const turnkey = useTurnkeySolanaSigner();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Adapter (Phantom/Solflare/etc.) takes priority when present; otherwise fall back to
+  // Turnkey email signer so users without an external wallet can still pay.
+  const publicKey = useMemo(
+    () => adapterPublicKey ?? turnkey.publicKey,
+    [adapterPublicKey, turnkey.publicKey]
+  );
+  const signTransaction = useMemo(() => {
+    if (adapterSignTransaction) return adapterSignTransaction;
+    if (turnkey.isAvailable) return turnkey.signTransaction;
+    return null;
+  }, [adapterSignTransaction, turnkey.isAvailable, turnkey.signTransaction]);
 
   /**
    * Send a USDC transfer to the payTo address as specified in the 402 response.
@@ -133,6 +148,23 @@ export function useSolanaX402Payment() {
         throw new Error("Insufficient devnet SOL for transaction fees.");
       }
 
+      // Turnkey email wallets sign server-side with no extension popup. Show an explicit
+      // in-app confirm so the user has a real "approve / cancel" step before USDC moves.
+      // External-wallet users get their wallet's native popup; skip the extra modal there.
+      const isTurnkey = !adapterSignTransaction && turnkey.isAvailable;
+      if (isTurnkey) {
+        const confirmed = await requestPaymentConfirm({
+          amount: (Number(amount) / 1_000_000).toFixed(2),
+          asset: "USDC",
+          to: recipient.toBase58(),
+          description: req.description,
+          network: req.network === "mainnet-beta" ? "Solana mainnet" : "Solana devnet",
+        });
+        if (!confirmed) {
+          throw new Error("Payment cancelled");
+        }
+      }
+
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
 
       const instructions = [
@@ -165,7 +197,8 @@ export function useSolanaX402Payment() {
 
       let signedTx: VersionedTransaction;
       try {
-        signedTx = await signTransaction(tx);
+        const result = await signTransaction(tx);
+        signedTx = result as VersionedTransaction;
       } catch (signErr: unknown) {
         const e = signErr as { message?: string };
         throw new Error(`Wallet signing failed: ${e?.message ?? "unknown error"}`);
@@ -201,7 +234,7 @@ export function useSolanaX402Payment() {
 
       return encodePaymentHeader(signature, publicKey.toBase58(), req.network);
     },
-    [publicKey, signTransaction, connection]
+    [publicKey, signTransaction, adapterSignTransaction, turnkey.isAvailable, connection]
   );
 
   /**

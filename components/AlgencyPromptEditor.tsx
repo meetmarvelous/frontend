@@ -10,6 +10,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { addCreation, getUserKeyFromAccount } from "@/lib/creations";
 import { useX402PaymentProduction } from "@/hooks/useX402PaymentProduction";
 import { useSolanaX402Payment } from "@/hooks/useSolanaX402Payment";
+import { useTurnkeyEmailAuth } from "@/hooks/useTurnkeyAuth";
 import { useBestPaymentChain } from "@/hooks/useWalletBalance";
 import type { ChainKey } from "@/shared/payment-config";
 import AlgencyMobileGenerateModal from "./AlgencyMobileGenerateModal";
@@ -63,7 +64,11 @@ function EmptyVarIcon() {
 export default function AlgencyPromptEditor() {
   const router = useRouter();
   const account = useActiveAccount();
-  const { connected: solanaConnected } = useWallet();
+  const { connected: solanaAdapterConnected } = useWallet();
+  const { address: turnkeyAddress } = useTurnkeyEmailAuth();
+  // Treat Turnkey email users as Solana-paying users — useSolanaX402Payment routes their
+  // signing through `/api/turnkey/sign-transaction` instead of the wallet adapter.
+  const solanaConnected = solanaAdapterConnected || !!turnkeyAddress;
   const { generateImage: generateImageWithPayment, isPending: isPaymentPending } = useX402PaymentProduction();
   const { generateImage: generateImageWithSolana, isPending: isSolanaPaymentPending } = useSolanaX402Payment();
   const { chainKey: bestChain } = useBestPaymentChain();

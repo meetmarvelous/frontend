@@ -8,6 +8,7 @@ import { ThirdwebProvider } from "./ThirdwebProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { SolanaWalletProvider } from "./SolanaWalletProvider";
 import { TurnkeyProvider } from "./TurnkeyProvider";
+import { PaymentConfirmModal } from "@/components/PaymentConfirmModal";
 
 /**
  * Provider hierarchy (outermost first):
@@ -45,7 +46,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <ThirdwebProvider>
           <TurnkeyProvider>
             <SolanaWalletProvider>
-              <TooltipProvider>{children}</TooltipProvider>
+              <TooltipProvider>
+                {children}
+                {/* Mounted once at app root so any payment hook can request confirmation. */}
+                <PaymentConfirmModal />
+              </TooltipProvider>
             </SolanaWalletProvider>
           </TurnkeyProvider>
         </ThirdwebProvider>
