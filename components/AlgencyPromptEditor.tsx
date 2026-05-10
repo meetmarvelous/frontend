@@ -39,6 +39,7 @@ interface PromptVariable {
   values: string[]; // stack of multiple values for batch generation
   required: boolean;
   position: number;
+  fullToken: string; // The literal string in the prompt (e.g. "[red car]")
 }
 
 interface VersionCard {
@@ -123,6 +124,7 @@ export default function AlgencyPromptEditor() {
     queueTotal: 0,
     isEditingVersion: false,
     editingVersionId: null as number | null,
+    editingNameVarId: null as string | null,
   });
 
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
@@ -181,33 +183,51 @@ export default function AlgencyPromptEditor() {
     });
   };
 
-  /* ─── Real-time Variable Sync — detects [], {}, and <> brackets ─── */
+  /* ─── Real-time Variable Sync — detects [], {}, and () brackets ─── */
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      // Universal bracket regex: [name], {name}, <name>
-      const regex = /(?:\[([a-z_0-9]+)\]|\{([a-z_0-9]+)\}|<([a-z_0-9]+)>)/gi;
-      const uniqueVarNames = new Set<string>();
+      // Universal bracket regex: [content], {content}, (content)
+      const regex = /(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/gi;
+      const detections: { content: string; full: string }[] = [];
       let match;
       while ((match = regex.exec(promptData.body)) !== null) {
-        const varName = match[1] || match[2] || match[3];
-        if (varName) uniqueVarNames.add(varName);
+        const content = match[1] || match[2] || match[3];
+        if (content) detections.push({ content, full: match[0] });
       }
 
       setVariables((prev) => {
-        const existingVars = prev.filter((v) => uniqueVarNames.has(v.name));
-        const existingNames = new Set(existingVars.map((v) => v.name));
         const newVars: PromptVariable[] = [];
-        uniqueVarNames.forEach((varName) => {
-          if (!existingNames.has(varName)) {
-            newVars.push({
-              id: varName, name: varName, label: varName, description: "",
-              type: "text", defaultValue: "", values: [], required: true, position: existingVars.length + newVars.length,
-            });
+        const seenTokens = new Set<string>();
+
+        detections.forEach((det) => {
+          if (seenTokens.has(det.full)) return;
+          seenTokens.add(det.full);
+
+          // 1. Try to find an existing variable that exactly matches this token
+          const existingByToken = prev.find(v => v.fullToken === det.full);
+          if (existingByToken) {
+            newVars.push(existingByToken);
+            return;
           }
+
+          // 2. Otherwise, create a brand new variable with a STABLE ID
+          const stableId = `var-${Math.random().toString(36).substring(2, 9)}`;
+          newVars.push({
+            id: stableId, 
+            name: "",     // Name remains empty until user fills it
+            label: det.content, // Original content
+            description: det.content,
+            type: "text",
+            defaultValue: det.content,
+            values: [det.content],
+            required: true,
+            position: newVars.length,
+            fullToken: det.full,
+          });
         });
-        return [...existingVars, ...newVars];
+        return newVars;
       });
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timeoutId);
   }, [promptData.body]);
@@ -231,45 +251,70 @@ export default function AlgencyPromptEditor() {
     });
   };
 
-  /* ─── Bracket Deletion ─── */
+  /* ─── Bracket Deletion — restores default value ─── */
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== 'Backspace' && e.key !== 'Delete') return;
     const el = e.currentTarget;
     const pos = el.selectionStart;
     const text = promptData.body;
 
-    const before = text.substring(0, pos);
-    const match = before.match(/\[([a-z_0-9]+)\]$/i);
-
-    if (match) {
-      e.preventDefault();
-      const varName = match[1];
-      const variable = variables.find(v => v.name === varName);
-      const defaultText = (variable?.type === "text" ? variable.defaultValue as string : varName) || varName;
-
-      const newText = text.substring(0, pos - match[0].length) + defaultText + text.substring(pos);
-      const newPos = pos - match[0].length + defaultText.length;
-
-      setPromptData(prev => ({ ...prev, body: newText }));
-
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = newPos;
-          textareaRef.current.focus();
+    // Check if we are deleting the closing bracket of a variable
+    const charBefore = text[pos - 1];
+    const isClosing = charBefore === ']' || charBefore === '}' || charBefore === ')';
+    
+    if (isClosing) {
+      // Find the start of the bracket group
+      const openChar = charBefore === ']' ? '[' : charBefore === '}' ? '{' : '(';
+      let startPos = pos - 2;
+      while (startPos >= 0 && text[startPos] !== openChar) startPos--;
+      
+      if (startPos >= 0) {
+        const fullToken = text.substring(startPos, pos);
+        const variable = variables.find(v => v.fullToken === fullToken);
+        
+        if (variable) {
+          e.preventDefault();
+          const restoredText = String(variable.defaultValue || variable.label);
+          const newBody = text.substring(0, startPos) + restoredText + text.substring(pos);
+          setPromptData(prev => ({ ...prev, body: newBody }));
+          
+          requestAnimationFrame(() => {
+            if (textareaRef.current) {
+              const newCursor = startPos + restoredText.length;
+              textareaRef.current.selectionStart = textareaRef.current.selectionEnd = newCursor;
+              textareaRef.current.focus();
+            }
+          });
         }
-      });
+      }
     }
   };
 
   /* ─── AI Variable Naming ─── */
   const handleTextareaSelect = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
     const el = e.currentTarget;
-    setUi(prev => ({ ...prev, cursorPos: el.selectionStart }));
-
     const start = el.selectionStart;
     const end = el.selectionEnd;
+    setUi(prev => ({ ...prev, cursorPos: start }));
+
+    // Auto-select variable if cursor is inside one
+    const text = promptData.body;
+    const regex = /(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/gi;
+    let match;
+    let foundVarId = null;
+    while ((match = regex.exec(text)) !== null) {
+      if (start >= match.index && start <= match.index + match[0].length) {
+        const variable = variables.find(v => v.fullToken === match![0]);
+        if (variable) foundVarId = variable.id;
+        break;
+      }
+    }
+    if (foundVarId) {
+      setUi(prev => ({ ...prev, selectedVariableId: foundVarId }));
+    }
+
     if (end > start) {
-      const selectedText = promptData.body.substring(start, end);
+      const selectedText = text.substring(start, end);
       const rect = el.getBoundingClientRect();
       // Approximate tooltip position near cursor
       const x = rect.left + 50;
@@ -281,45 +326,58 @@ export default function AlgencyPromptEditor() {
     }
   };
 
+  const handleCreateVariable = useCallback((text: string) => {
+    const el = textareaRef.current;
+    if (!el) return;
+    
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const val = promptData.body;
+    const bracketed = `[${text}]`;
+    const newVal = val.substring(0, start) + bracketed + val.substring(end);
+
+    const stableId = `var-${Math.random().toString(36).substring(2, 9)}`;
+    
+    setPromptData(prev => ({ ...prev, body: newVal }));
+    setVariables(prev => [...prev, {
+      id: stableId, 
+      name: "", 
+      label: text, 
+      description: text,
+      type: "text", 
+      defaultValue: text, 
+      values: [text], 
+      required: true, 
+      position: prev.length,
+      fullToken: bracketed
+    }]);
+    setUi(prev => ({ ...prev, tooltip: null, selectedVariableId: stableId }));
+
+    requestAnimationFrame(() => {
+      if (textareaRef.current) {
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + bracketed.length;
+        textareaRef.current.focus();
+      }
+    });
+  }, [promptData.body]);
+
+  const handleVariableButtonClick = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const selectedText = promptData.body.substring(start, end);
+    
+    if (selectedText.trim()) {
+      handleCreateVariable(selectedText);
+    } else {
+      insertAtCursor("[Variable]");
+    }
+  };
+
   const createVariableFromSelection = () => {
     if (!ui.tooltip) return;
-    const { text } = ui.tooltip;
-
-    // NLP name generation
-    const doc = nlp(text);
-    const nouns = doc.nouns().out('array');
-    const base = nouns[0] || doc.terms().out('array')[0] || 'variable';
-    let varName = base.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
-
-    // Duplicate handling
-    const existingNames = variables.map(v => v.name);
-    if (existingNames.includes(varName)) {
-      let i = 1;
-      while (existingNames.includes(`${varName}_${i}`)) i++;
-      varName = `${varName}_${i}`;
-    }
-
-    const el = textareaRef.current;
-    if (el) {
-      const start = el.selectionStart;
-      const end = el.selectionEnd;
-      const val = promptData.body;
-      const newVal = val.substring(0, start) + `[${varName}]` + val.substring(end);
-
-      setPromptData(prev => ({ ...prev, body: newVal }));
-      setVariables(prev => [...prev, {
-        id: varName, name: varName, label: varName, description: "",
-        type: "text", defaultValue: text, values: [text], required: true, position: prev.length
-      }]);
-      setUi(prev => ({ ...prev, tooltip: null, selectedVariableId: varName }));
-
-      requestAnimationFrame(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + `[${varName}]`.length;
-          textareaRef.current.focus();
-        }
-      });
-    }
+    handleCreateVariable(ui.tooltip.text);
   };
 
   /* ─── Sync textarea scroll with overlay ─── */
@@ -342,46 +400,88 @@ export default function AlgencyPromptEditor() {
     return previewText;
   };
 
-  /* ─── Update variable ─── */
+  /* ─── Update variable — Syncs Name with Prompt ─── */
   const updateVariable = (varId: string, updates: Partial<PromptVariable>) => {
-    if (updates.name !== undefined) {
-      const currentVar = variables.find((v) => v.id === varId);
-      if (currentVar && currentVar.name !== updates.name) {
-        const oldPlaceholder = `[${currentVar.name}]`;
-        const newPlaceholder = `[${updates.name}]`;
-        setPromptData(prev => ({ ...prev, body: prev.body.split(oldPlaceholder).join(newPlaceholder) }));
-        setVariables(variables.map((v) =>
-          v.id === varId ? { ...v, ...updates, id: updates.name! } : v
-        ));
-        return;
-      }
+    const currentVar = variables.find((v) => v.id === varId);
+    if (!currentVar) return;
+
+    // If we are currently editing the name of THIS variable, the prompt should show the name.
+    // Otherwise, it should show the default value.
+    const isEditingThisName = ui.editingNameVarId === varId;
+    
+    let newDisplayContent = "";
+    if (isEditingThisName) {
+      newDisplayContent = (updates.name !== undefined ? updates.name : currentVar.name) || currentVar.label;
+    } else {
+      newDisplayContent = (updates.defaultValue !== undefined ? String(updates.defaultValue) : String(currentVar.defaultValue)) || currentVar.label;
     }
-    setVariables(variables.map((v) => (v.id === varId ? { ...v, ...updates } : v)));
+
+    const open = currentVar.fullToken[0];
+    const close = currentVar.fullToken[currentVar.fullToken.length - 1];
+    const newFullToken = `${open}${newDisplayContent}${close}`;
+    
+    if (newFullToken !== currentVar.fullToken) {
+      setPromptData(prev => ({ 
+        ...prev, 
+        body: prev.body.split(currentVar.fullToken).join(newFullToken) 
+      }));
+      
+      setVariables(prev => prev.map(v => 
+        v.id === varId ? { ...v, ...updates, fullToken: newFullToken } : v
+      ));
+    } else {
+      setVariables(prev => prev.map(v => (v.id === varId ? { ...v, ...updates } : v)));
+    }
+  };
+
+  const handleVariableNameFocus = (varId: string) => {
+    setUi(prev => ({ ...prev, editingNameVarId: varId }));
+    const variable = variables.find(v => v.id === varId);
+    if (variable) {
+      const open = variable.fullToken[0];
+      const close = variable.fullToken[variable.fullToken.length - 1];
+      const newFullToken = `${open}${variable.name || variable.label}${close}`;
+      setPromptData(prev => ({ ...prev, body: prev.body.split(variable.fullToken).join(newFullToken) }));
+      setVariables(prev => prev.map(v => v.id === varId ? { ...v, fullToken: newFullToken } : v));
+    }
+  };
+
+  const handleVariableNameBlur = (varId: string) => {
+    setUi(prev => ({ ...prev, editingNameVarId: null }));
+    const variable = variables.find(v => v.id === varId);
+    if (variable) {
+      const open = variable.fullToken[0];
+      const close = variable.fullToken[variable.fullToken.length - 1];
+      const newFullToken = `${open}${variable.defaultValue || variable.label}${close}`;
+      setPromptData(prev => ({ ...prev, body: prev.body.split(variable.fullToken).join(newFullToken) }));
+      setVariables(prev => prev.map(v => v.id === varId ? { ...v, fullToken: newFullToken } : v));
+    }
   };
 
   /* ─── Render prompt text with colored variable tags ─── */
-  const getVarStyle = (varName: string) => {
-    const isSelected = ui.selectedVariableId === varName;
-    const variable = variables.find(v => v.name === varName);
-    if (isSelected) return { background: "var(--alg-accent)", color: "var(--alg-panel)" };
+  const getVarStyle = (fullToken: string) => {
+    const variable = variables.find(v => v.fullToken === fullToken);
+    const isSelected = ui.selectedVariableId === variable?.id;
+    if (isSelected) return { background: "var(--alg-accent)", color: "white", borderBottomStyle: "solid" };
     if (variable?.type === "checkbox") return { background: "var(--alg-hover-bg)", color: "var(--alg-dark)" };
-    return { background: "var(--alg-peach-bg)", color: "var(--alg-dark)" };
+    return { background: "var(--alg-accent-light)", color: "var(--alg-accent)" };
   };
 
   const renderPromptWithTags = () => {
-    // Split on [], {}, and <> bracket groups
-    const parts = promptData.body.split(/((?:\[[a-z_0-9]+\]|\{[a-z_0-9]+\}|<[a-z_0-9]+>))/i);
+    // Split on [], {}, and () bracket groups
+    const parts = promptData.body.split(/((?:\[[^\]]+\]|\{[^\}]+\}|\([^\)]+\)))/i);
     return parts.map((part, index) => {
-      const match = part.match(/(?:\[([a-z_0-9]+)\]|\{([a-z_0-9]+)\}|<([a-z_0-9]+)>)/i);
+      const match = part.match(/(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/i);
       if (match) {
-        const varName = match[1] || match[2] || match[3];
-        const style = getVarStyle(varName);
+        const variable = variables.find(v => v.fullToken === part);
+        const isSelected = ui.selectedVariableId === variable?.id;
+        const style = getVarStyle(part);
         return (
           <span
             key={index}
-            className="alg-var-tag"
+            className={`alg-var-tag ${isSelected ? "alg-var-tag--active" : ""}`}
             style={style}
-            onClick={() => setUi(prev => ({ ...prev, selectedVariableId: varName }))}
+            onClick={() => setUi(prev => ({ ...prev, selectedVariableId: variable?.id || null }))}
           >
             {part}
           </span>
@@ -723,8 +823,8 @@ export default function AlgencyPromptEditor() {
         {/* ═══ PANEL 01 — Settings ═══ */}
         <section className="alg-panel" style={{ background: "var(--alg-bg)" }}>
           <div className="alg-panel__header">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span className="alg-panel__number" style={{ color: "var(--alg-accent)" }}>01</span>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <span className="alg-panel__number">01</span>
               <span className="alg-panel__title">Settings</span>
             </div>
           </div>
@@ -736,7 +836,6 @@ export default function AlgencyPromptEditor() {
               value={promptData.title}
               onChange={(e) => setPromptData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Untitled Prompt"
-              style={{ width: "100%", marginBottom: 16 }}
             />
 
             {/* Display Mode */}
@@ -787,9 +886,9 @@ export default function AlgencyPromptEditor() {
             <div className="alg-divider" />
 
             {/* Preferred Models */}
-            <div className="alg-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="alg-label">
               <span>PREFERRED MODELS</span>
-              <span style={{ fontSize: 10, fontFamily: "var(--font-jetbrains-mono), monospace", color: "var(--alg-hint)", textTransform: 'lowercase', letterSpacing: 0, fontWeight: 500 }}>multi-select</span>
+              <span style={{ fontSize: 10, color: "var(--alg-hint)", textTransform: 'lowercase', letterSpacing: 0, fontWeight: 500 }}>multi-select</span>
             </div>
             {models.available.length === 0 ? (
               <div style={{ fontSize: 13, color: "var(--alg-muted)" }}>No models available</div>
@@ -799,13 +898,13 @@ export default function AlgencyPromptEditor() {
                 return (
                   <div
                     key={model.id}
-                    className={`alg-model-row ${isActive ? "alg-model-row--active" : ""}`}
+                    className={`alg-model-card ${isActive ? "alg-model-card--active" : ""}`}
                     onClick={() => toggleModel(model.id)}
                   >
-                    <span className="alg-model-row__name" style={{ display: 'flex', alignItems: 'center' }}>
+                    <span className="alg-model-card__name">
                       {model.name}
                     </span>
-                    <span className="alg-model-row__price">${model.price.toFixed(2)}</span>
+                    <span className="alg-model-card__price">${model.price.toFixed(2)}</span>
                   </div>
                 );
               })
@@ -834,20 +933,20 @@ export default function AlgencyPromptEditor() {
             <div className="alg-divider" />
 
             {/* Reference Images */}
-            <div className="alg-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="alg-label">
               <span>REFERENCE IMAGES</span>
-              <span className="alg-label__badge" style={{ background: "#C7663A", color: "white", borderRadius: 0, padding: "2px 6px" }}>ALLOWED</span>
+              <span className="alg-label__badge">ALLOWED</span>
             </div>
-            <div style={{ border: "1px solid var(--alg-border)", borderRadius: "3px", padding: "16px", background: "var(--alg-white)", marginBottom: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <span style={{ fontSize: 11, fontFamily: "var(--font-jetbrains-mono), monospace", color: "var(--alg-hint)" }}>Max images</span>
+            <div style={{ border: "1px solid var(--alg-border)", borderRadius: "3px", padding: "12px", background: "var(--alg-white)", marginBottom: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                <span style={{ fontSize: 9, fontFamily: "var(--alg-font-mono)", color: "var(--alg-hint)", letterSpacing: "0.05em" }}>MAX IMAGES</span>
                 <div className="alg-stepper">
-                  <button className="alg-stepper__btn" onClick={() => setUi(prev => ({ ...prev, maxImages: Math.max(1, prev.maxImages - 1) }))}>−</button>
-                  <span className="alg-stepper__value" style={{ width: 32, textAlign: 'center', fontFamily: "var(--font-serif)", fontSize: 16, color: "var(--alg-dark)", background: "var(--alg-white)" }}>{ui.maxImages}</span>
-                  <button className="alg-stepper__btn" onClick={() => setUi(prev => ({ ...prev, maxImages: Math.min(10, prev.maxImages + 1) }))}>+</button>
+                  <button className="alg-stepper__btn" style={{ width: 24, height: 24, fontSize: 14 }} onClick={() => setUi(prev => ({ ...prev, maxImages: Math.max(1, prev.maxImages - 1) }))}>−</button>
+                  <span className="alg-stepper__value" style={{ width: 24, textAlign: 'center', fontFamily: "var(--alg-font-serif)", fontSize: 13, color: "var(--alg-dark)", background: "var(--alg-white)", border: 'none', padding: 0 }}>{ui.maxImages}</span>
+                  <button className="alg-stepper__btn" style={{ width: 24, height: 24, fontSize: 14 }} onClick={() => setUi(prev => ({ ...prev, maxImages: Math.min(10, prev.maxImages + 1) }))}>+</button>
                 </div>
               </div>
-              <p className="alg-hint-text" style={{ fontStyle: "italic", fontFamily: "var(--font-jetbrains-mono), monospace", color: "var(--alg-muted)", margin: 0, lineHeight: 1.6 }}>
+              <p className="alg-hint-text" style={{ margin: 0 }}>
                 Buyers can upload an image — or pick an NFT from their wallet — up to {ui.maxImages} per render.
               </p>
             </div>
@@ -856,8 +955,8 @@ export default function AlgencyPromptEditor() {
 
             {/* Pricing */}
             <div className="alg-label">PRICING</div>
-            <div style={{ border: "1px solid var(--alg-border)", borderRadius: "3px", padding: "16px", background: "var(--alg-white)" }}>
-              <p style={{ fontFamily: "var(--font-serif)", fontSize: 15, fontStyle: "italic", color: "var(--alg-dark)", margin: 0, lineHeight: 1.5 }}>
+            <div style={{ border: "1px solid var(--alg-border)", borderRadius: "3px", padding: "12px", background: "var(--alg-white)" }}>
+              <p className="alg-hint-text" style={{ margin: 0, fontSize: 11, color: 'var(--alg-dark)' }}>
                 Free prompts cost nothing to use.<br />Buyers run the prompt with their own API credits.
               </p>
             </div>
@@ -868,11 +967,11 @@ export default function AlgencyPromptEditor() {
         {/* ═══ PANEL 02 — Prompt ═══ */}
         <section className="alg-panel">
           <div className="alg-panel__header">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span className="alg-panel__number" style={{ color: "var(--alg-accent)" }}>02</span>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <span className="alg-panel__number">02</span>
               <span className="alg-panel__title">Prompt</span>
             </div>
-            <button className="alg-btn alg-btn--ghost alg-btn--sm" onClick={() => insertAtCursor("[NewVariable]")}>
+            <button className="alg-btn alg-btn--ghost alg-btn--sm" onClick={handleVariableButtonClick}>
               <Plus size={14} /> Variable
             </button>
           </div>
@@ -889,7 +988,8 @@ export default function AlgencyPromptEditor() {
             )}
 
             {/* Textarea with overlay */}
-            <div style={{ position: "relative", flex: 1, minHeight: 200 }}>
+            {/* Textarea with overlay box */}
+            <div className="alg-textarea-box">
               {promptData.body.length > 0 && (
                 <div ref={overlayRef} className="alg-prompt-overlay">
                   {renderPromptWithTags()}
@@ -899,34 +999,70 @@ export default function AlgencyPromptEditor() {
                 ref={textareaRef}
                 className="alg-textarea"
                 style={{
-                  position: "relative",
                   background: promptData.body.length > 0 ? "transparent" : undefined,
-                  color: promptData.body.length > 0 ? "transparent" : "transparent",
+                  color: promptData.body.length > 0 ? "transparent" : undefined,
                   caretColor: "var(--alg-dark)",
                   zIndex: 1,
-                  minHeight: 200,
                 }}
                 value={promptData.body}
                 onChange={(e) => setPromptData(prev => ({ ...prev, body: e.target.value }))}
                 onScroll={handleTextareaScroll}
                 onSelect={handleTextareaSelect}
                 onKeyDown={handleTextareaKeyDown}
+                spellCheck={false}
                 placeholder="Write your prompt here... Select text to extract a variable."
               />
             </div>
 
-            <div style={{ height: 24, flexShrink: 0 }} />
+            {/* Variable Tabs Row */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+              {variables.map(v => (
+                <button
+                  key={v.id}
+                  onClick={() => setUi(prev => ({ ...prev, selectedVariableId: v.id }))}
+                  style={{
+                    background: "none", border: "none", padding: "4px 8px",
+                    fontFamily: "var(--alg-font-mono)", fontSize: 11,
+                    color: ui.selectedVariableId === v.id ? "var(--alg-dark)" : "var(--alg-hint)",
+                    borderBottom: ui.selectedVariableId === v.id ? "1.5px solid var(--alg-dark)" : "1.5px solid transparent",
+                    cursor: "pointer", transition: "all 0.2s"
+                  }}
+                >
+                  [{v.name || "..."}]
+                </button>
+              ))}
+            </div>
+
+            {/* Prompt Stats Row */}
+            <div style={{ display: "flex", gap: 32, marginTop: 12, paddingBottom: 12 }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--alg-dark)" }}>{promptData.body.length}</span>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 9, color: "var(--alg-hint)", textTransform: "uppercase" }}>chars</span>
+              </div>
+              <div style={{ width: 1, height: 24, background: "var(--alg-border)", alignSelf: "center", opacity: 0.5 }} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--alg-dark)" }}>{variables.length}</span>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 9, color: "var(--alg-hint)", textTransform: "uppercase" }}>variables</span>
+              </div>
+              <div style={{ width: 1, height: 24, background: "var(--alg-border)", alignSelf: "center", opacity: 0.5 }} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 9, color: "var(--alg-hint)", textTransform: "uppercase", marginTop: "auto" }}>autosaves every</span>
+                <span style={{ fontFamily: "var(--alg-font-mono)", fontSize: 9, color: "var(--alg-hint)", textTransform: "uppercase" }}>keystroke</span>
+              </div>
+            </div>
+
+            <div style={{ height: 12, flexShrink: 0 }} />
           </div>
         </section>
 
         {/* ═══ PANEL 03 — Variables ═══ */}
         <section className="alg-panel">
           <div className="alg-panel__header">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span className="alg-panel__number" style={{ color: "var(--alg-accent)" }}>03</span>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <span className="alg-panel__number">03</span>
               <span className="alg-panel__title">Variables</span>
             </div>
-            <span className="alg-panel__subtitle">defaults & types</span>
+            <span className="alg-panel__meta">defaults & types</span>
           </div>
           <div className="alg-panel__body">
             {variables.length === 0 ? (
@@ -942,42 +1078,62 @@ export default function AlgencyPromptEditor() {
                   className={`alg-var-card alg-var-card--entering ${ui.selectedVariableId === variable.id ? "alg-var-card--active" : ""}`}
                   onClick={() => setUi(prev => ({ ...prev, selectedVariableId: variable.id }))}
                 >
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
-                    <div className="alg-var-card__name">{variable.label}</div>
-                    <div className="alg-var-card__label" style={{ marginBottom: 0 }}>VARIABLE NAME</div>
-                  </div>
+                  {/* Variable Name Section */}
+                  <div className="alg-var-card__label">VARIABLE NAME</div>
+                  <input 
+                    className={`alg-var-card__name-input ${!variable.name ? "alg-var-card__name-input--error" : ""}`}
+                    value={variable.name}
+                    onChange={(e) => updateVariable(variable.id, { name: e.target.value })}
+                    onFocus={() => handleVariableNameFocus(variable.id)}
+                    onBlur={() => handleVariableNameBlur(variable.id)}
+                    placeholder="e.g. Subject"
+                    title={!variable.name ? "Fill in the variables." : "Variable name used in prompt logic."}
+                  />
 
                   {/* Type toggle */}
-                  <div className="alg-type-toggle">
+                  <div className="alg-type-toggle" style={{ margin: "16px 0" }}>
                     <button
                       className={`alg-type-toggle__btn ${variable.type === "text" ? "alg-type-toggle__btn--active" : ""}`}
-                      onClick={(e) => { e.stopPropagation(); updateVariable(variable.id, { type: "text" }); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        updateVariable(variable.id, { 
+                          type: "text",
+                          defaultValue: variable.description || variable.defaultValue || variable.label
+                        }); 
+                      }}
                     >
                       Text input
                     </button>
                     <button
                       className={`alg-type-toggle__btn ${variable.type === "checkbox" ? "alg-type-toggle__btn--active" : ""}`}
-                      onClick={(e) => { e.stopPropagation(); updateVariable(variable.id, { type: "checkbox" }); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        updateVariable(variable.id, { 
+                          type: "checkbox",
+                          description: String(variable.defaultValue || variable.description || variable.label),
+                          defaultValue: true
+                        }); 
+                      }}
                     >
                       Yes / No checkbox
                     </button>
                   </div>
 
-                  {/* Default value + stacked values */}
+                  {/* Default value section */}
+                  <div className="alg-var-card__label">DEFAULT VALUE</div>
                   {variable.type === "text" ? (
                     <>
-                      <div className="alg-var-card__label" style={{ marginTop: 8, marginBottom: 4 }}>DEFAULT VALUE</div>
-                      <div className={`alg-var-card__default-val ${ui.selectedVariableId === variable.id && !variable.defaultValue ? "alg-var-card__default-val--italic" : ""}`}>
-                        {(variable.defaultValue as string) || (ui.selectedVariableId === variable.id ? "e.g. a young woman, dark hair..." : "")}
-                      </div>
+                      <input 
+                        className="alg-var-card__default-input"
+                        value={String(variable.defaultValue || "")}
+                        onChange={(e) => updateVariable(variable.id, { defaultValue: e.target.value })}
+                        placeholder="e.g. a young woman..."
+                      />
                       <div className="alg-var-card__hint">Used until the buyer changes it.</div>
-
-
                     </>
                   ) : (
                     <>
                       <div className="alg-toggle-inserts-row">
-                        <span className="alg-toggle-inserts-label">TOGGLE INSERTS</span>
                         <label className="alg-checkbox" onClick={(e) => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--alg-hint)' }}>
                           <input
                             type="checkbox"
@@ -988,12 +1144,13 @@ export default function AlgencyPromptEditor() {
                           <span>Default: <span style={{ fontWeight: 600, color: 'var(--alg-dark)' }}>{variable.defaultValue ? "on" : "off"}</span></span>
                         </label>
                       </div>
-                      <div className="alg-toggle-inserts-block">
-                        {variable.description || "Add a soft, grainy film texture — like an old 35mm…"}
-                      </div>
-                      <div className="alg-toggle-inserts-footer">
-                        The prompt text wrapping <span className="alg-mono-span">[{variable.name}]</span> in column 02.
-                      </div>
+                      <textarea 
+                        className="alg-var-card__desc-input"
+                        value={variable.description}
+                        onChange={(e) => updateVariable(variable.id, { description: e.target.value })}
+                        placeholder="Add text to insert when checked..."
+                        rows={2}
+                      />
                     </>
                   )}
                 </div>
@@ -1005,8 +1162,7 @@ export default function AlgencyPromptEditor() {
         </section>
 
         {/* ═══ PANEL 04 — Verify ═══ */}
-        <section className="alg-panel alg-panel--verify" style={{ background: "var(--alg-bg)" }}>
-          
+        <section className="alg-panel alg-panel--verify">
           {/* Dual-Arrow Bridge — Circuit Track Design */}
           <div className="alg-bridge-overlay">
             <button
@@ -1050,16 +1206,16 @@ export default function AlgencyPromptEditor() {
           </div>
 
           <div className="alg-panel__header">
-            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-              <span className="alg-panel__number" style={{ color: "var(--alg-accent)" }}>04</span>
+            <div style={{ display: "flex", alignItems: "baseline" }}>
+              <span className="alg-panel__number">04</span>
               <span className="alg-panel__title">Verify</span>
             </div>
-            <span style={{ marginLeft: "auto", fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 10, color: "var(--alg-hint)", letterSpacing: 0.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flexShrink: 1, minWidth: 0 }}>
+            <span className="alg-panel__meta">
               {promptData.type === "free-prompt" ? `${verifiedCount}/1 req · 4 rec` : `${verifiedCount}/4 required`}
             </span>
           </div>
-          <div className="alg-panel__body" style={{ display: "flex", flexDirection: "column" }}>
-            <p style={{ fontFamily: "var(--font-outfit), 'Outfit', sans-serif", fontSize: "clamp(11px, 0.8vw + 6px, 14px)", color: "var(--alg-hint)", marginBottom: 12, lineHeight: 1.4, flexShrink: 0 }}>
+          <div className="alg-panel__body">
+            <p className="alg-hint-text" style={{ marginBottom: 16 }}>
               {promptData.type === "free-prompt"
                 ? "Free prompts need at least one reference render. Four is recommended — buyers trust prompts that prove they generalize."
                 : "Premium prompts require exactly four reference renders to prove they generate consistently high-quality results."}
@@ -1201,11 +1357,11 @@ export default function AlgencyPromptEditor() {
           </div>
 
           {/* Prompt Ownership Notice */}
-          <div style={{ padding: "12px", background: "#fffaf0", borderTop: "1px solid #f5e6cc", borderBottom: "1px solid #f5e6cc" }}>
-            <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-              <AlertTriangle size={18} style={{ color: "#b8860b", marginTop: "2px", flexShrink: 0 }} />
-              <p style={{ fontSize: "clamp(12px, 0.8vw + 6px, 15px)", color: "#8a6d3b", lineHeight: 1.5, margin: 0 }}>
-                <strong>Ownership Notice:</strong> Only mark prompts as your own property if you genuinely created them. We will be rolling out methods to verify prompt originality. Falsely claiming authorship will be flagged and may result in strikes against your account. See Terms of Service.
+          <div style={{ padding: "8px 12px", background: "#fffaf0", borderTop: "1px solid #f5e6cc", borderBottom: "1px solid #f5e6cc" }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "flex-start" }}>
+              <AlertTriangle size={14} style={{ color: "#b8860b", marginTop: "1px", flexShrink: 0 }} />
+              <p style={{ fontSize: 11, color: "#8a6d3b", lineHeight: 1.4, margin: 0 }}>
+                <strong>Ownership Notice:</strong> Only mark prompts as your own property if you genuinely created them. Falsely claiming authorship will result in account strikes. See Terms.
               </p>
             </div>
           </div>
@@ -1242,7 +1398,11 @@ export default function AlgencyPromptEditor() {
                   <button
                     className="alg-pay-btn"
                     onClick={handlePayAndGenerate}
-                    disabled={isGeneratingPaymentPending || versions.filter(v => v.status === "idle" || v.status === "failed").length === 0}
+                    disabled={
+                      isGeneratingPaymentPending || 
+                      versions.filter(v => v.status === "idle" || v.status === "failed").length === 0 ||
+                      (promptData.type === "premium-prompt" && variables.some(v => !v.name))
+                    }
                     style={{ padding: "6px 8px", height: "auto", whiteSpace: "nowrap", fontSize: 9 }}
                   >
                     {isGeneratingPaymentPending ? (

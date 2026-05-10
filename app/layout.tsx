@@ -10,6 +10,7 @@ import {
   Playfair_Display,
   Cormorant_Garamond,
   DM_Sans,
+  Fraunces,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "../providers";
@@ -72,6 +73,13 @@ const dmSans = DM_Sans({
   variable: "--font-dm-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  style: ["normal", "italic"],
 });
 
 
@@ -159,7 +167,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${sora.variable} ${instrumentSerif.variable} ${playfairDisplay.variable} ${outfit.variable} ${cormorantGaramond.variable} ${dmSans.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} ${jetbrainsMono.variable} ${sora.variable} ${instrumentSerif.variable} ${playfairDisplay.variable} ${outfit.variable} ${cormorantGaramond.variable} ${dmSans.variable} ${fraunces.variable} antialiased`}
       >
         <Providers>
           <Navbar />
