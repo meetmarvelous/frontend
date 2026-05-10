@@ -1020,19 +1020,32 @@
   border-color: rgba(0, 0, 0, 0.2);
 }
 
+.enki-qc-panel-content {
+  flex: 1;
+  background: #fdfcf9;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.enki-qc-main-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 40px;
+}
+
 .enki-qc-section-label-ref {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.12em;
   color: #aaa;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   display: block;
 }
 
 .enki-qc-textarea-ref {
   width: 100%;
   min-height: 140px;
-  padding: 16px;
+  padding: 24px;
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;

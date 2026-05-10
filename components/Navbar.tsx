@@ -94,7 +94,6 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const { theme, toggleTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
   const [showWalletPicker, setShowWalletPicker] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const evmAuthenticated = !!account && walletInfo.isConnected;
   // Solana는 서명까지 끝나야(=session active) 인증으로 본다. 단순 connect 상태로는
@@ -127,7 +126,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
 
   const NAV_LINKS = [
     { label: "DISCOVER", href: "/", disabled: false },
-    { label: "IMAGES", href: "/showcase", disabled: false },
+    { label: "IMAGES", href: "/images", disabled: false },
     { label: "VIDEOS", href: "/showcase", disabled: true, tooltip: "Video prompts will be implemented soon" },
     { label: "FAVORITES", href: "/my-gallery", disabled: false },
   ];
@@ -148,28 +147,6 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
       }}>
         <div style={{ padding: isMobile ? "0 12px" : "0 8px 0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           
-          {/* Full Width Search Overlay */}
-          {isSearchOpen && (
-            <div style={{ position: "absolute", inset: 0, padding: isMobile ? "0 12px" : "0 24px", display: "flex", alignItems: "center", background: isDark ? "rgba(13, 13, 13, 1)" : "#fff", zIndex: 10 }}>
-              <Search size={18} color={iconColor} style={{ flexShrink: 0 }} />
-              <input 
-                autoFocus
-                placeholder="Search Enki Art..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (onSearch) onSearch(searchQuery);
-                    setIsSearchOpen(false);
-                  }
-                }}
-                style={{ flex: 1, height: "100%", background: "transparent", border: "none", outline: "none", padding: "0 16px", color: isDark ? "#fff" : "#111", fontSize: 16, fontFamily: "inherit" }}
-              />
-              <button onClick={() => setIsSearchOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: iconColor, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>×</span>
-              </button>
-            </div>
-          )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
             <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic", fontWeight: 400, fontSize: isMobile ? 22 : 28, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.02em" }}>
@@ -181,7 +158,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           {!isMobile && (
             <nav style={{ display: "flex", alignItems: "center", gap: isTablet ? 0 : 4, margin: "0 auto" }}>
               {visibleNavLinks.map(({ label, href, disabled, tooltip }) => {
-                const isActive = (label === "DISCOVER" && pathname === "/") || (label === "IMAGES" && pathname === "/showcase");
+                const isActive = (label === "DISCOVER" && pathname === "/") || (label === "IMAGES" && pathname === "/images");
                 return (
                   <button
                     key={label}
@@ -208,17 +185,53 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 2 : 4, flexShrink: 0, zIndex: 2 }}>
-            <button style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "none", border: "none",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: iconColor, transition: "background 0.2s ease",
-            }}
-            onClick={() => setIsSearchOpen(true)}
-            onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.04)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}>
-              <Search size={16} />
-            </button>
+            {!isMobile && (
+              <div style={{ 
+                position: "relative", 
+                width: isTablet ? 180 : 240, 
+                height: 36, 
+                display: "flex", 
+                alignItems: "center",
+                marginRight: 8
+              }}>
+                <Search size={14} color={iconColor} style={{ position: "absolute", left: 12, opacity: 0.5, pointerEvents: "none" }} />
+                <input 
+                  placeholder="Search Enki Art..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (onSearch) {
+                        onSearch(searchQuery);
+                      } else {
+                        router.push(`/images?q=${encodeURIComponent(searchQuery)}`);
+                      }
+                    }
+                  }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+                    e.currentTarget.style.boxShadow = `0 0 0 1px ${isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                  style={{ 
+                    width: "100%", 
+                    height: "100%", 
+                    padding: "0 12px 0 34px", 
+                    borderRadius: 20, 
+                    background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+                    border: "none",
+                    outline: "none",
+                    fontSize: 13,
+                    color: isDark ? "#fff" : "#111",
+                    fontFamily: "inherit",
+                    transition: "all 0.2s ease"
+                  }}
+                />
+              </div>
+            )}
 
             <button
               aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}

@@ -58,10 +58,22 @@ export default function EnkiFeedPage() {
     return live.length && !isError ? live : getFallbackEnkiPrompts(24);
   }, [data, isError]);
 
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const query = searchParams?.get("q")?.toLowerCase() || "";
+
   const visible = useMemo<EnkiPrompt[]>(() => {
-    if (!tags.length) return prompts;
-    return prompts.filter((prompt) => tags.every((tag) => prompt.tags.includes(tag)));
-  }, [prompts, tags]);
+    let filtered = prompts;
+    if (tags.length) {
+      filtered = filtered.filter((prompt) => tags.every((tag) => prompt.tags.includes(tag)));
+    }
+    if (query) {
+      filtered = filtered.filter((prompt) => 
+        prompt.title.toLowerCase().includes(query) || 
+        prompt.description.toLowerCase().includes(query)
+      );
+    }
+    return filtered;
+  }, [prompts, tags, query]);
 
   const toggleTag = (tag: string) => {
     setTags((current) => (

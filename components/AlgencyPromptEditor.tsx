@@ -459,7 +459,7 @@ export default function AlgencyPromptEditor() {
   };
 
   /* ─── Render prompt text with colored variable tags ─── */
-  const getVarStyle = (fullToken: string) => {
+  const getVarStyle = (fullToken: string): React.CSSProperties => {
     const variable = variables.find(v => v.fullToken === fullToken);
     const isSelected = ui.selectedVariableId === variable?.id;
     if (isSelected) return { background: "var(--alg-accent)", color: "white", borderBottomStyle: "solid" };
