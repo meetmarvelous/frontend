@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ApiKeyStamper } from '@turnkey/api-key-stamper';
-import { TurnkeyBrowserClient, DEFAULT_SOLANA_ACCOUNTS } from '@turnkey/sdk-browser';
+import { TurnkeyServerClient, DEFAULT_SOLANA_ACCOUNTS } from '@turnkey/sdk-server';
 import { getSupabaseServerClient } from '@/lib/supabaseServer';
 import { requireAuth } from '@/lib/auth';
 import { checkRequestRateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit';
@@ -15,7 +15,7 @@ function getTurnkeyClient() {
     throw new Error('TURNKEY_API_PUBLIC_KEY, TURNKEY_API_PRIVATE_KEY, TURNKEY_ORGANIZATION_ID must be set');
   }
   const stamper = new ApiKeyStamper({ apiPublicKey, apiPrivateKey });
-  return new TurnkeyBrowserClient({ stamper, apiBaseUrl: TURNKEY_BASE_URL, organizationId });
+  return new TurnkeyServerClient({ stamper, apiBaseUrl: TURNKEY_BASE_URL, organizationId });
 }
 
 /**

@@ -5,9 +5,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiKeyStamper } from "@turnkey/api-key-stamper";
 import { TurnkeyBrowserClient } from "@turnkey/sdk-browser";
+import { generateP256KeyPair } from "@turnkey/crypto";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { requireAuth } from "@/lib/auth";
-import { generateKeyPairSync, randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 import { checkRequestRateLimit, rateLimitKey, rateLimitResponse } from "@/lib/rate-limit";
 
 const TURNKEY_BASE_URL = "https://api.turnkey.com";
@@ -27,13 +28,7 @@ function getTurnkeyClient(organizationId: string) {
 }
 
 function generateEphemeralPublicKeyHex(): string {
-  const { publicKey } = generateKeyPairSync("ec", { namedCurve: "P-256" });
-  const spki = publicKey.export({ type: "spki", format: "der" });
-  const uncompressed = spki.slice(spki.length - 65);
-  const x = uncompressed.slice(1, 33);
-  const y = uncompressed.slice(33, 65);
-  const prefix = y[31] & 1 ? 0x03 : 0x02;
-  return Buffer.concat([Buffer.from([prefix]), x]).toString("hex");
+  return generateP256KeyPair().publicKeyUncompressed;
 }
 
 export async function POST(req: NextRequest) {

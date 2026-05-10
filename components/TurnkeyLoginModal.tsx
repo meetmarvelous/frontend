@@ -72,21 +72,23 @@ export function TurnkeyLoginModal({ onSuccess, onClose }: TurnkeyLoginModalProps
         ) : (
           <form onSubmit={handleVerify} className="flex flex-col gap-4">
             <p className="text-sm text-zinc-500">
-              Enter the 6-digit code sent to <strong>{email}</strong>
+              Enter the verification code sent to <strong>{email}</strong>
             </p>
             <input
               type="text"
               required
-              placeholder="123456"
-              maxLength={6}
+              placeholder="Enter code"
+              maxLength={32}
+              autoComplete="one-time-code"
+              spellCheck={false}
               value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-xl font-mono tracking-widest outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+              onChange={(e) => setOtpCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
+              className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center font-mono text-base tracking-wide outline-none focus:border-zinc-400 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               type="submit"
-              disabled={step === "verifying" || otpCode.length < 6}
+              disabled={step === "verifying" || otpCode.trim().length === 0}
               className="w-full rounded-lg bg-zinc-900 py-3 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
             >
               {step === "verifying" ? "Verifying..." : "Verify code"}
@@ -156,17 +158,19 @@ export function TurnkeyDeleteConfirm({ email, onConfirmed, onClose }: TurnkeyDel
           <input
             type="text"
             required
-            placeholder="123456"
-            maxLength={6}
+            placeholder="Enter code"
+            maxLength={32}
+            autoComplete="one-time-code"
+            spellCheck={false}
             value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+            onChange={(e) => setOtpCode(e.target.value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase())}
             disabled={step === "sending"}
-            className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center text-xl font-mono tracking-widest outline-none focus:border-zinc-400 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+            className="w-full rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-center font-mono text-base tracking-wide outline-none focus:border-zinc-400 disabled:opacity-40 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
           />
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"
-            disabled={step === "verifying" || step === "sending" || otpCode.length < 6}
+            disabled={step === "verifying" || step === "sending" || otpCode.trim().length === 0}
             className="w-full rounded-lg bg-red-600 py-3 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
           >
             {step === "verifying" ? "Verifying..." : "Delete Prompt"}

@@ -10,6 +10,7 @@ interface TurnkeyWalletState {
   subOrganizationId: string | null;
   sessionToken: string | null;
   error: string | null;
+  isReturning: boolean;
 }
 
 export function useTurnkeyWallet() {
@@ -19,11 +20,12 @@ export function useTurnkeyWallet() {
     subOrganizationId: null,
     sessionToken: null,
     error: null,
+    isReturning: false,
   });
   const [otpId, setOtpId] = useState<string | null>(null);
 
   async function sendOtp(email: string) {
-    setState({ step: "sending", walletAddress: null, subOrganizationId: null, sessionToken: null, error: null });
+    setState({ step: "sending", walletAddress: null, subOrganizationId: null, sessionToken: null, error: null, isReturning: false });
 
     try {
       const res = await fetch("/api/auth/turnkey/init", {
@@ -40,7 +42,7 @@ export function useTurnkeyWallet() {
       }
 
       setOtpId(data.otpId);
-      setState((s) => ({ ...s, step: "code_sent" }));
+      setState((s) => ({ ...s, step: "code_sent", isReturning: !!data.isReturning }));
     } catch {
       setState((s) => ({ ...s, step: "error", error: "Network error. Please try again." }));
     }
@@ -65,13 +67,15 @@ export function useTurnkeyWallet() {
         return;
       }
 
-      setState({
+      setState((s) => ({
         step: "done",
         walletAddress: data.walletAddress,
         subOrganizationId: data.subOrganizationId,
         sessionToken: data.sessionToken ?? null,
         error: null,
-      });
+        // verify-time isReturning takes precedence (DB lookup is authoritative).
+        isReturning: typeof data.isReturning === "boolean" ? data.isReturning : s.isReturning,
+      }));
     } catch {
       setState((s) => ({ ...s, step: "error", error: "Network error. Please try again." }));
     }
@@ -79,7 +83,7 @@ export function useTurnkeyWallet() {
 
   function reset() {
     setOtpId(null);
-    setState({ step: "idle", walletAddress: null, subOrganizationId: null, sessionToken: null, error: null });
+    setState({ step: "idle", walletAddress: null, subOrganizationId: null, sessionToken: null, error: null, isReturning: false });
   }
 
   return { ...state, sendOtp, verifyOtp, reset };

@@ -414,14 +414,14 @@ export default function AlgencyPromptEditor() {
     try {
       const data = solanaConnected
         ? await generateImageWithSolana({
-          prompt: previewText,
-          resolution: "2K",
-          chain: "solana-devnet",
-        }) as { imageUrl: string; provider?: string; usedGemini?: boolean }
+            prompt: previewText,
+            resolution: "2K",
+            chain: "solana-devnet",
+          }) as { imageUrl: string; provider?: string; usedGemini?: boolean }
         : await generateImageWithPayment(
-          { prompt: previewText, resolution: "2K", modelIds: models.selected, ratio: ratios.selected },
-          selectedChain
-        ) as { imageUrl: string; provider?: string; usedGemini?: boolean };
+            { prompt: previewText, resolution: "2K", modelIds: models.selected, ratio: ratios.selected },
+            selectedChain
+          ) as { imageUrl: string; provider?: string; usedGemini?: boolean };
       if (!data?.imageUrl) {
         throw new Error("Image generated, but no image URL was returned.");
       }
@@ -478,7 +478,7 @@ export default function AlgencyPromptEditor() {
   const handleStackVariables = () => {
     const textVars = variables.filter(v => v.type === "text");
     const stackSize = Math.max(1, ...textVars.map(v => (v.values.length > 0 ? v.values.length : 1)));
-
+    
     setVersions(prev => {
       // Remove failed cards to allow re-submission
       const activeVersions = prev.filter(v => v.status !== "failed");
@@ -487,16 +487,16 @@ export default function AlgencyPromptEditor() {
       for (let i = 0; i < stackSize; i++) {
         const snapshot: Record<string, string> = {};
         variables.forEach(v => {
-          if (v.type === "checkbox") {
-            snapshot[v.name] = v.defaultValue ? v.description || "on" : "off";
-          } else {
-            const pool = v.values.length > 0 ? v.values : [(v.defaultValue as string) || v.name];
-            snapshot[v.name] = pool[i % pool.length];
-          }
-        });
-        newCards.push({ id: baseId + i + 1, variableSnapshot: snapshot, imageUrl: null, status: "idle" });
-      }
-      return [...activeVersions, ...newCards];
+        if (v.type === "checkbox") {
+          snapshot[v.name] = v.defaultValue ? v.description || "on" : "off";
+        } else {
+          const pool = v.values.length > 0 ? v.values : [(v.defaultValue as string) || v.name];
+          snapshot[v.name] = pool[i % pool.length];
+        }
+      });
+      newCards.push({ id: baseId + i + 1, variableSnapshot: snapshot, imageUrl: null, status: "idle" });
+    }
+    return [...activeVersions, ...newCards];
     });
   };
 
@@ -551,6 +551,11 @@ export default function AlgencyPromptEditor() {
 
   /* ─── Pay & Generate — UX shows total cost, fires sequential per-slot x402 ─── */
   const handlePayAndGenerate = () => {
+    if (!walletConnected) {
+      setShowWalletPicker(true);
+      toast({ title: "Wallet required", description: "Connect a wallet to generate with x402.", variant: "destructive" });
+      return;
+    }
     const processableCards = versions.filter(v => v.status === "idle" || v.status === "failed");
     if (processableCards.length === 0) {
       toast({ title: "No slots ready", description: "Stack variables first." });
@@ -704,9 +709,8 @@ export default function AlgencyPromptEditor() {
 
   return (
     <div className="alg-page" onClick={() => { setUi(prev => ({ ...prev, showAvatarDropdown: false, tooltip: null })) }}>
-      {/* ═══ NAVBAR ═══ */}
-      <Navbar />
       <WalletPickerModal open={showWalletPicker} onClose={() => setShowWalletPicker(false)} />
+
 
       {/* ═══ 4-COLUMN GRID ═══ */}
       <div className="alg-grid desktop-only">
@@ -723,27 +727,12 @@ export default function AlgencyPromptEditor() {
             {/* Prompt Title */}
             <div className="alg-label">PROMPT TITLE</div>
             <input
+              className="alg-input alg-input--title"
               value={promptData.title}
               onChange={(e) => setPromptData(prev => ({ ...prev, title: e.target.value }))}
               placeholder="Untitled Prompt"
-              style={{
-                width: "100%",
-                fontSize: "32px",
-                fontFamily: "var(--font-cormorant), 'Cormorant Garamond', serif",
-                fontStyle: "italic",
-                fontWeight: 300,
-                color: "var(--alg-dark)",
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                padding: "4px 0 12px 0",
-                margin: 0,
-                lineHeight: "1.2",
-                letterSpacing: "-0.01em",
-              }}
+              style={{ width: "100%", marginBottom: 16 }}
             />
-            
-            <div className="alg-divider" style={{ marginTop: "8px" }} />
 
             {/* Display Mode */}
             <div className="alg-label">DISPLAY MODE</div>
@@ -853,12 +842,21 @@ export default function AlgencyPromptEditor() {
                   <button className="alg-stepper__btn" onClick={() => setUi(prev => ({ ...prev, maxImages: Math.min(10, prev.maxImages + 1) }))}>+</button>
                 </div>
               </div>
-              <p className="alg-hint-text" style={{ fontSize: 10, fontStyle: "italic", fontFamily: "var(--font-jetbrains-mono), monospace", color: "var(--alg-muted)", margin: 0, lineHeight: 1.6 }}>
+              <p className="alg-hint-text" style={{ fontStyle: "italic", fontFamily: "var(--font-jetbrains-mono), monospace", color: "var(--alg-muted)", margin: 0, lineHeight: 1.6 }}>
                 Buyers can upload an image — or pick an NFT from their wallet — up to {ui.maxImages} per render.
               </p>
             </div>
 
             <div className="alg-divider" style={{ marginTop: 24, marginBottom: 24 }} />
+
+            {/* Pricing */}
+            <div className="alg-label">PRICING</div>
+            <div style={{ border: "1px solid var(--alg-border)", borderRadius: "3px", padding: "16px", background: "var(--alg-white)" }}>
+              <p style={{ fontFamily: "var(--font-serif)", fontSize: 15, fontStyle: "italic", color: "var(--alg-dark)", margin: 0, lineHeight: 1.5 }}>
+                Free prompts cost nothing to use.<br />Buyers run the prompt with their own API credits.
+              </p>
+            </div>
+            <div style={{ height: 24, flexShrink: 0 }} />
           </div>
         </section>
 
@@ -1003,7 +1001,7 @@ export default function AlgencyPromptEditor() {
 
         {/* ═══ PANEL 04 — Verify ═══ */}
         <section className="alg-panel alg-panel--verify" style={{ background: "var(--alg-bg)" }}>
-
+          
           {/* Dual-Arrow Bridge — Circuit Track Design */}
           <div className="alg-bridge-overlay">
             <button
@@ -1029,7 +1027,7 @@ export default function AlgencyPromptEditor() {
               }}
               title="Edit — send selected back to Variables"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
             </button>
             <div className="alg-bridge-track">
               <div className="alg-bridge-track__dot" />
@@ -1042,7 +1040,7 @@ export default function AlgencyPromptEditor() {
               onClick={() => handleStackVariables()}
               title="Push variables to Verify"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
           </div>
 
@@ -1056,7 +1054,7 @@ export default function AlgencyPromptEditor() {
             </span>
           </div>
           <div className="alg-panel__body" style={{ display: "flex", flexDirection: "column" }}>
-            <p style={{ fontFamily: "var(--font-outfit), 'Outfit', sans-serif", fontSize: "clamp(10px, 0.8vw + 4px, 12px)", color: "var(--alg-hint)", marginBottom: 12, lineHeight: 1.4, flexShrink: 0 }}>
+            <p style={{ fontFamily: "var(--font-outfit), 'Outfit', sans-serif", fontSize: "clamp(11px, 0.8vw + 6px, 14px)", color: "var(--alg-hint)", marginBottom: 12, lineHeight: 1.4, flexShrink: 0 }}>
               {promptData.type === "free-prompt"
                 ? "Free prompts need at least one reference render. Four is recommended — buyers trust prompts that prove they generalize."
                 : "Premium prompts require exactly four reference renders to prove they generate consistently high-quality results."}
@@ -1065,106 +1063,106 @@ export default function AlgencyPromptEditor() {
             {versions.map((slot) => {
               const isSelected = ui.selectedCards.includes(slot.id);
               return (
-                <div key={slot.id} className="alg-version-card-wrapper">
-                  <div
-                    className={`alg-version-card ${isSelected ? "alg-version-card--selected" : ""}`}
-                    onClick={() => toggleVersionCheckbox(slot.id)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    {/* Image panel — always visible */}
-                    <div className="alg-version-card__thumb">
-                      {slot.status === "complete" && slot.imageUrl && (
-                        <img
-                          src={slot.imageUrl}
-                          alt={`Version ${String(slot.id).padStart(2, "0")}`}
-                        />
-                      )}
-                      {slot.status === "generating" && (
-                        <div className="alg-spinner" />
-                      )}
-                      {slot.status === "queued" && (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, zIndex: 2 }}>
-                          <span style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: "#c0542a" }}>#{slot.queuePosition}</span>
-                          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#888", letterSpacing: "0.1em" }}>IN QUEUE</span>
-                        </div>
-                      )}
-                      {slot.status === "failed" && (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "0 10px", textAlign: "center", zIndex: 2 }}>
-                          <AlertTriangle color="#c0542a" size={20} />
-                          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#c0542a", letterSpacing: "0.05em" }}>RESTRICTED</span>
-                        </div>
-                      )}
-                      {/* Overlay: status */}
-                      <span className="alg-version-card__overlay-status">
-                        {slot.status === "complete" ? "● ready" :
-                          slot.status === "generating" ? "● generating" :
-                            slot.status === "queued" ? `● queue` :
-                              slot.status === "failed" ? "● failed" :
-                                ""}
-                      </span>
-                      {/* Overlay: version label */}
-                      <span className="alg-version-card__overlay-label">
-                        Version {String(slot.id).padStart(2, "0")}
-                      </span>
-                    </div>
+                  <div key={slot.id} className="alg-version-card-wrapper">
+                    <div
+                      className={`alg-version-card ${isSelected ? "alg-version-card--selected" : ""}`}
+                      onClick={() => toggleVersionCheckbox(slot.id)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      {/* Image panel — always visible */}
+                      <div className="alg-version-card__thumb">
+                        {slot.status === "complete" && slot.imageUrl && (
+                          <img
+                            src={slot.imageUrl}
+                            alt={`Version ${String(slot.id).padStart(2, "0")}`}
+                          />
+                        )}
+                        {slot.status === "generating" && (
+                          <div className="alg-spinner" />
+                        )}
+                        {slot.status === "queued" && (
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, zIndex: 2 }}>
+                            <span style={{ fontFamily: "monospace", fontSize: 18, fontWeight: 700, color: "#c0542a" }}>#{slot.queuePosition}</span>
+                            <span style={{ fontFamily: "monospace", fontSize: 9, color: "#888", letterSpacing: "0.1em" }}>IN QUEUE</span>
+                          </div>
+                        )}
+                        {slot.status === "failed" && (
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "0 10px", textAlign: "center", zIndex: 2 }}>
+                            <AlertTriangle color="#c0542a" size={20} />
+                            <span style={{ fontFamily: "monospace", fontSize: 9, color: "#c0542a", letterSpacing: "0.05em" }}>FAILED</span>
+                          </div>
+                        )}
+                        {/* Overlay: status */}
+                        <span className="alg-version-card__overlay-status">
+                          {slot.status === "complete" ? "● ready" :
+                           slot.status === "generating" ? "● generating" :
+                           slot.status === "queued" ? `● queue` :
+                           slot.status === "failed" ? "● failed" :
+                           ""}
+                        </span>
+                        {/* Overlay: version label */}
+                        <span className="alg-version-card__overlay-label">
+                          Version {String(slot.id).padStart(2, "0")}
+                        </span>
+                      </div>
 
-                    {/* Metadata panel */}
-                    <div className="alg-version-card__info">
-                      {Object.entries(slot.variableSnapshot).map(([key, val]) => {
-                        const valAny = val as unknown;
-                        const isCheckbox = valAny === "true" || valAny === "false" || valAny === true || valAny === false;
-                        const isChecked = valAny === "true" || valAny === true;
+                      {/* Metadata panel */}
+                      <div className="alg-version-card__info">
+                        {Object.entries(slot.variableSnapshot).map(([key, val]) => {
+                          const valAny = val as unknown;
+                          const isCheckbox = valAny === "true" || valAny === "false" || valAny === true || valAny === false;
+                          const isChecked = valAny === "true" || valAny === true;
 
-                        if (isCheckbox) {
-                          return (
-                            <div key={key} className="alg-version-card__checkbox-row">
-                              <div className={`alg-version-card__checkbox ${isChecked ? "alg-version-card__checkbox--checked" : "alg-version-card__checkbox--unchecked"}`}>
-                                {isChecked && (
-                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5" /></svg>
-                                )}
+                          if (isCheckbox) {
+                            return (
+                              <div key={key} className="alg-version-card__checkbox-row">
+                                <div className={`alg-version-card__checkbox ${isChecked ? "alg-version-card__checkbox--checked" : "alg-version-card__checkbox--unchecked"}`}>
+                                  {isChecked && (
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                                  )}
+                                </div>
+                                <span className="alg-version-card__checkbox-label">
+                                  {key === "grain" ? "Add film grain" : key.charAt(0).toUpperCase() + key.slice(1)}
+                                </span>
                               </div>
-                              <span className="alg-version-card__checkbox-label">
-                                {key === "grain" ? "Add film grain" : key.charAt(0).toUpperCase() + key.slice(1)}
-                              </span>
+                            );
+                          }
+
+                          return (
+                            <div key={key} className="alg-version-card__row">
+                              <span className="alg-version-card__key">{key.toUpperCase()}</span>
+                              <span className="alg-version-card__val">{val || <span style={{ color: "#8a7f72", fontStyle: "italic" }}>—</span>}</span>
                             </div>
                           );
-                        }
+                        })}
 
-                        return (
-                          <div key={key} className="alg-version-card__row">
-                            <span className="alg-version-card__key">{key.toUpperCase()}</span>
-                            <span className="alg-version-card__val">{val || <span style={{ color: "#8a7f72", fontStyle: "italic" }}>—</span>}</span>
+                        {/* Download link for complete cards */}
+                        {slot.status === "complete" && slot.imageUrl && (
+                          <div className="alg-version-card__row" style={{ paddingTop: 3, borderTop: "1px solid #d8d0c6" }}>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const a = document.createElement("a");
+                                a.href = slot.imageUrl!;
+                                a.download = `version-${slot.id}.png`;
+                                a.click();
+                              }}
+                              style={{
+                                background: "none", border: "none", padding: 0, cursor: "pointer",
+                                fontFamily: "monospace", fontSize: 8, color: "#c0542a",
+                                letterSpacing: "0.05em", textDecoration: "underline",
+                              }}
+                            >
+                              ↓ save
+                            </button>
                           </div>
-                        );
-                      })}
-
-                      {/* Download link for complete cards */}
-                      {slot.status === "complete" && slot.imageUrl && (
-                        <div className="alg-version-card__row" style={{ paddingTop: 3, borderTop: "1px solid #d8d0c6" }}>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const a = document.createElement("a");
-                              a.href = slot.imageUrl!;
-                              a.download = `version-${slot.id}.png`;
-                              a.click();
-                            }}
-                            style={{
-                              background: "none", border: "none", padding: 0, cursor: "pointer",
-                              fontFamily: "monospace", fontSize: 8, color: "#c0542a",
-                              letterSpacing: "0.05em", textDecoration: "underline",
-                            }}
-                          >
-                            ↓ save
-                          </button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-            <div style={{ height: 24, flexShrink: 0 }} />
+                );
+              })}
+              <div style={{ height: 24, flexShrink: 0 }} />
 
             {/* Multi-select action bar — Delete only OR Delete & Refill */}
             {ui.selectedCards.length > 0 && (
@@ -1198,67 +1196,58 @@ export default function AlgencyPromptEditor() {
           </div>
 
           {/* Prompt Ownership Notice */}
-          <div style={{
-            padding: "12px 14px",
-            background: "var(--alg-white)",
-            borderTop: "1px solid var(--alg-border)",
-            borderBottom: "1px solid var(--alg-border)",
-            flexShrink: 0,
-          }}>
+          <div style={{ padding: "12px", background: "#fffaf0", borderTop: "1px solid #f5e6cc", borderBottom: "1px solid #f5e6cc" }}>
             <div style={{ display: "flex", gap: "10px", alignItems: "flex-start" }}>
-              <AlertTriangle size={15} style={{ color: "var(--alg-muted)", marginTop: "1px", flexShrink: 0 }} />
-              <div>
-                <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", fontWeight: 700, color: "var(--alg-text)", margin: "0 0 2px" }}>Ownership Notice</p>
-                <p style={{ fontSize: 11, fontFamily: "var(--font-inter), sans-serif", color: "var(--alg-muted)", lineHeight: 1.5, margin: 0 }}>
-                  Only mark prompts as your own property if you genuinely created them. We will be rolling out methods to verify prompt originality. Falsely claiming authorship will be flagged and may result in strikes against your account. See Terms of Service.
-                </p>
-              </div>
+              <AlertTriangle size={18} style={{ color: "#b8860b", marginTop: "2px", flexShrink: 0 }} />
+              <p style={{ fontSize: "clamp(12px, 0.8vw + 6px, 15px)", color: "#8a6d3b", lineHeight: 1.5, margin: 0 }}>
+                <strong>Ownership Notice:</strong> Only mark prompts as your own property if you genuinely created them. We will be rolling out methods to verify prompt originality. Falsely claiming authorship will be flagged and may result in strikes against your account. See Terms of Service.
+              </p>
             </div>
           </div>
 
           {/* Consolidated Action Bar */}
-          <div style={{ background: "var(--alg-bg)", borderTop: "1px solid var(--alg-border)", padding: "10px 14px", zIndex: 10, marginTop: "auto", flexShrink: 0 }}>
+          <div style={{ background: "var(--alg-warm-white)", borderTop: "1px solid var(--alg-border)", padding: "10px 12px", zIndex: 10, marginTop: "auto" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {/* Cost summary */}
               {versions.some(v => v.status === "idle" || v.status === "failed") && (
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 10px", background: "var(--alg-panel)", border: "1px solid var(--alg-border)", borderRadius: 6 }}>
-                  <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, color: "var(--alg-muted)", letterSpacing: 1.5, textTransform: "uppercase" }}>Batch Cost</span>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 5 }}>
-                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 13, fontWeight: 700, color: "var(--alg-dark)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "var(--alg-panel)", border: "1px solid var(--alg-border)" }}>
+                  <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(9px, 0.6vw + 6px, 12px)", color: "var(--alg-muted)", letterSpacing: 1, textTransform: "uppercase" }}>Batch cost</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(12px, 0.8vw + 8px, 16px)", fontWeight: 700, color: "var(--alg-dark)" }}>
                       {getBatchCost(Math.max(versions.filter(v => v.status === "idle" || v.status === "failed").length, variables.filter(v => v.type === "text").length > 0 ? Math.max(...variables.filter(v => v.type === "text").map(v => v.values.length || 1)) : 1))}
                     </span>
-                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, color: "var(--alg-hint)" }}>
+                    <span style={{ fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: "clamp(9px, 0.5vw + 6px, 11px)", color: "var(--alg-hint)" }}>
                       via {solanaConnected ? "Solana" : "Thirdweb"} x402
                     </span>
                   </div>
                 </div>
               )}
               {/* Action Buttons Row */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>
                 <button
                   className="alg-btn alg-btn--ghost alg-btn--sm"
-                  style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 12px", color: "var(--alg-muted)", fontFamily: "var(--font-inter), sans-serif", fontSize: 11, whiteSpace: "nowrap", borderRadius: 6 }}
+                  style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 6px", color: "var(--alg-muted)", fontFamily: "var(--font-jetbrains-mono), monospace", fontSize: 9, whiteSpace: "nowrap" }}
                   onClick={handleGrokFill}
                   disabled={ui.isGrokFilling}
                 >
-                  <Sparkles size={12} />
+                  <Sparkles size={10} />
                   {ui.isGrokFilling ? "Filling..." : "Auto Fill"}
                 </button>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                   <button
                     className="alg-pay-btn"
                     onClick={handlePayAndGenerate}
                     disabled={isGeneratingPaymentPending || versions.filter(v => v.status === "idle" || v.status === "failed").length === 0}
-                    style={{ padding: "8px 14px", height: "auto", whiteSpace: "nowrap", fontSize: 11, borderRadius: 6 }}
+                    style={{ padding: "6px 8px", height: "auto", whiteSpace: "nowrap", fontSize: 9 }}
                   >
                     {isGeneratingPaymentPending ? (
                       <>● Processing...</>
                     ) : (
                       <>
-                        <Zap size={11} />
+                        <Zap size={10} />
                         Pay &amp; Gen
                         {versions.filter(v => v.status === "idle" || v.status === "failed").length > 0 && (
-                          <span style={{ marginLeft: 4, opacity: 0.6, fontWeight: 400, fontSize: 9 }}>
+                          <span style={{ marginLeft: 4, opacity: 0.6, fontWeight: 400, fontSize: 8 }}>
                             ({versions.filter(v => v.status === "idle" || v.status === "failed").length})
                           </span>
                         )}
@@ -1266,8 +1255,8 @@ export default function AlgencyPromptEditor() {
                     )}
                   </button>
                   <button
-                    className="alg-btn alg-btn--sm"
-                    style={{ padding: "8px 14px", background: isPublishDisabled ? "var(--alg-disabled-bg)" : "var(--alg-dark)", border: "none", color: "white", opacity: 1, cursor: isPublishDisabled ? "not-allowed" : "pointer", whiteSpace: "nowrap", borderRadius: 6, fontSize: 11, fontFamily: "var(--font-inter), sans-serif", fontWeight: 600 }}
+                    className="alg-btn alg-btn--primary alg-btn--sm"
+                    style={{ padding: "6px 8px", background: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", borderColor: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", color: "white", opacity: 1, cursor: isPublishDisabled ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
                     disabled={isPublishDisabled}
                   >
                     Publish
@@ -1296,7 +1285,7 @@ export default function AlgencyPromptEditor() {
       {/* Mobile Floating Button */}
       {isMobileViewport && !isMobileModalOpen && (
         <div style={{ position: "fixed", bottom: 24, left: 24, right: 24, zIndex: 150 }}>
-          <button
+          <button 
             style={{ width: "100%", background: "var(--alg-dark)", color: "white", padding: "16px 24px", borderRadius: 32, display: "flex", justifyContent: "space-between", alignItems: "center", border: "none", boxShadow: "0 12px 32px rgba(0,0,0,0.2)", cursor: "pointer" }}
             onClick={() => setIsMobileModalOpen(true)}
           >
@@ -1317,7 +1306,7 @@ export default function AlgencyPromptEditor() {
         setPromptBody={(val) => setPromptData(prev => ({ ...prev, body: val }))}
         variables={variables}
         onVariableChange={(id, val) => {
-          setVariables(prev => prev.map(v =>
+          setVariables(prev => prev.map(v => 
             v.id === id ? { ...v, defaultValue: val, values: [val] } : v
           ));
         }}
@@ -1336,19 +1325,17 @@ export default function AlgencyPromptEditor() {
         onAutoFill={handleGrokFill}
         isAutoFilling={ui.isGrokFilling}
         onGenerate={() => {
-          // Mobile single generation with payment
+          if (!walletConnected) {
+            setShowWalletPicker(true);
+            toast({ title: "Wallet required", description: "Connect a wallet to generate with x402.", variant: "destructive" });
+            return;
+          }
           const snapshot: Record<string, string> = {};
           variables.forEach(v => { snapshot[v.name] = (v.defaultValue as string) || v.name; });
           const newId = versions.length > 0 ? Math.max(...versions.map(v => v.id)) + 1 : 1;
-
           setVersions(prev => [...prev, { id: newId, variableSnapshot: snapshot, imageUrl: null, status: "idle" }]);
-
           toast({ title: `Paying ${formatCost(getPricePerSlot())}`, description: "Processing micro-payment for generation..." });
-
-          // Slight delay to allow state update before firing payment
-          setTimeout(() => {
-            handleGenerateVersion(newId);
-          }, 100);
+          setTimeout(() => { handleGenerateVersion(newId); }, 100);
         }}
       />
     </div>

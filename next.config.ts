@@ -1,14 +1,14 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.resolve(__dirname),
+
   // Legacy Express server files (backend/app.ts, backend/routes.ts) are preserved
   // for upstream compatibility but not used in Next.js API routes.
   // @types/express is installed as dev dependency for TypeScript type checking.
 
-  // Turbopack configuration
-  turbopack: {},
-  
-  // Webpack configuration (fallback for non-Turbopack builds)
+  // Webpack configuration
   webpack: (config, { isServer }) => {
     // Fix for Thirdweb ESM modules
     if (!isServer) {

@@ -25,12 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState, useEffect, createContext, useContext } from "react";
-import { useActiveAccount, useActiveWallet } from "thirdweb/react";
+import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { ChainSwitcher } from "./ChainSwitcher";
 import { WalletPickerModal } from "./WalletPickerModal";
 import { useToast } from "@/hooks/use-toast";
 import { useWalletInfo } from "@/hooks/useWalletInfo";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { useSolanaAuth } from "@/hooks/useSolanaAuth";
 import { useTheme } from "../providers/ThemeProvider";
 import { useTurnkeyEmailAuth } from "@/hooks/useTurnkeyAuth";
 
@@ -86,7 +87,9 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const account = useSafeActiveAccount();
   const wallet = useSafeActiveWallet();
   const walletInfo = useSafeWalletInfo();
+  const { disconnect: evmDisconnect } = useDisconnect();
   const { connected: solanaConnected, publicKey: solanaPublicKey, disconnect: solanaDisconnect } = useWallet();
+  const { isAuthenticated: solanaSessionActive, walletAddress: solanaSessionAddress, logout: solanaSessionLogout } = useSolanaAuth();
   const { address: turnkeyAddress, clear: clearTurnkeyAuth } = useTurnkeyEmailAuth();
   const { theme, toggleTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
@@ -94,11 +97,13 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const evmAuthenticated = !!account && walletInfo.isConnected;
-  const authenticated = evmAuthenticated || solanaConnected || !!turnkeyAddress;
+  // Solana는 서명까지 끝나야(=session active) 인증으로 본다. 단순 connect 상태로는
+  // 인증된 것처럼 표시하지 않는다 (premature-login 버그 방지).
+  const authenticated = evmAuthenticated || solanaSessionActive || !!turnkeyAddress;
   const router = useRouter();
   const { toast } = useToast();
   const pathname = usePathname();
-  const walletAddress = walletInfo.address ?? solanaPublicKey?.toBase58() ?? turnkeyAddress ?? null;
+  const walletAddress = walletInfo.address ?? solanaSessionAddress ?? turnkeyAddress ?? (solanaSessionActive ? solanaPublicKey?.toBase58() ?? null : null);
   const { isMobile, isTablet, isDesktop } = useBreakpoint();
   const isDark = themeReady && theme === "dark";
 
@@ -134,7 +139,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   return (
     <>
       <header style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
         width: "100%",
         background: isDark ? "rgba(10, 10, 12, 0.98)" : "rgba(255, 255, 255, 0.98)",
         backdropFilter: "blur(64px) saturate(200%)",
@@ -293,10 +298,10 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
             {!authenticated && (
               <button onClick={() => setShowWalletPicker(true)} style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "0 16px", height: 36, 
-                background: isDark ? "rgba(255,255,255,0.05)" : "#111", 
+                padding: "0 16px", height: 36,
+                background: isDark ? "rgba(255,255,255,0.05)" : "#111",
                 color: isDark ? "#fff" : "#fff",
-                border: isDark ? "1px solid rgba(255,255,255,0.1)" : "none", 
+                border: isDark ? "1px solid rgba(255,255,255,0.1)" : "none",
                 borderRadius: 8, cursor: "pointer",
                 fontSize: 12, fontWeight: 600, fontFamily: "var(--font-geist-sans), sans-serif", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap",
                 boxShadow: "0 2px 10px rgba(0,0,0,0.1)", transition: "transform 0.2s ease",
@@ -389,15 +394,19 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                 <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
                 <DropdownMenuItem onClick={() => router.push("/settings")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">Settings</DropdownMenuItem>
 
-                {((authenticated && account) || solanaConnected || !!turnkeyAddress) && (
+                {((authenticated && account) || solanaConnected || solanaSessionActive || !!turnkeyAddress) && (
                   <>
                     <DropdownMenuSeparator className="bg-black/5" />
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
                           if (turnkeyAddress) { clearTurnkeyAuth(); toast({ title: "Signed out" }); return; }
-                          if (solanaConnected) await solanaDisconnect();
-                          else if (wallet) await wallet.disconnect();
+                          if (solanaConnected || solanaSessionActive) {
+                            // 세션 정리 후 어댑터 disconnect까지 강제 실행. 둘 다 실패해도 다음 단계로.
+                            await solanaSessionLogout().catch(() => {});
+                            await solanaDisconnect().catch(() => {});
+                          }
+                          else if (wallet) evmDisconnect(wallet);
                           else window.location.reload();
                           toast({ title: "Wallet disconnected" });
                         } catch { window.location.reload(); }
@@ -408,15 +417,17 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     </DropdownMenuItem>
                   </>
                 )}
-                <div className="px-2 py-1.5">
-                  <Button 
-                    className="w-full bg-[#C7663A] hover:bg-[#A3522E] text-white rounded-none h-8 text-[10px] font-mono uppercase tracking-wider" 
-                    size="sm" 
-                    onClick={() => setShowWalletPicker(true)}
-                  >
-                    Connect Wallet
-                  </Button>
-                </div>
+                {!authenticated && (
+                  <div className="px-2 py-1.5">
+                    <Button
+                      className="w-full bg-[#C7663A] hover:bg-[#A3522E] text-white rounded-none h-8 text-[10px] font-mono uppercase tracking-wider"
+                      size="sm"
+                      onClick={() => setShowWalletPicker(true)}
+                    >
+                      Connect Wallet
+                    </Button>
+                  </div>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
