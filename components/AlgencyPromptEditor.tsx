@@ -510,23 +510,42 @@ export default function AlgencyPromptEditor() {
       toast({ title: "Error", description: "Please enter a prompt.", variant: "destructive" });
       return;
     }
-    if (!walletConnected) {
+    const isFreePrompt = promptData.type === "free-prompt";
+    if (!isFreePrompt && !walletConnected) {
       setShowWalletPicker(true);
       toast({ title: "Wallet required", description: "Connect a wallet to generate with x402.", variant: "destructive" });
       return;
     }
     setVersions(prev => prev.map(v => v.id === versionId ? { ...v, status: "generating" } : v));
     try {
-      const data = solanaConnected
-        ? await generateImageWithSolana({
+      let data: { imageUrl: string; provider?: string; usedGemini?: boolean };
+      if (isFreePrompt) {
+        const res = await fetch("/api/generate-free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             prompt: previewText,
             resolution: "2K",
-            chain: "solana-devnet",
-          }) as { imageUrl: string; provider?: string; usedGemini?: boolean }
-        : await generateImageWithPayment(
-            { prompt: previewText, resolution: "2K", modelIds: models.selected, ratio: ratios.selected },
-            selectedChain
-          ) as { imageUrl: string; provider?: string; usedGemini?: boolean };
+            aspectRatio: ratios.selected,
+          }),
+        });
+        if (!res.ok) {
+          const err = (await res.json().catch(() => ({}))) as { error?: string };
+          throw new Error(err.error || "Free generation failed");
+        }
+        data = await res.json() as { imageUrl: string; provider?: string; usedGemini?: boolean };
+      } else {
+        data = solanaConnected
+          ? await generateImageWithSolana({
+              prompt: previewText,
+              resolution: "2K",
+              chain: "solana-devnet",
+            }) as { imageUrl: string; provider?: string; usedGemini?: boolean }
+          : await generateImageWithPayment(
+              { prompt: previewText, resolution: "2K", modelIds: models.selected, ratio: ratios.selected },
+              selectedChain
+            ) as { imageUrl: string; provider?: string; usedGemini?: boolean };
+      }
       if (!data?.imageUrl) {
         throw new Error("Image generated, but no image URL was returned.");
       }
