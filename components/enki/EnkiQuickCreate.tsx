@@ -1,6 +1,11 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { ChevronUp, PenSquare, Sparkles, Plus, X, GripVertical, Settings2, Info, Image as ImageIcon, Wallet, Minus, ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useActiveAccount } from "thirdweb/react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useTurnkeyEmailAuth } from "@/hooks/useTurnkeyAuth";
+import { useToast } from "@/hooks/use-toast";
+import { addCreation } from "@/lib/creations";
 
 const QC_MODELS = [
   { id: "nano-banana-pro", name: "Nano Banana Pro", cost: 0.04 },
@@ -13,22 +18,61 @@ const QC_QTY = [1, 2, 4, 8];
 
 export default function EnkiQuickCreate() {
   const router = useRouter();
+  const { toast } = useToast();
+  const account = useActiveAccount();
+  const { publicKey: solanaPublicKey } = useWallet();
+  const { address: turnkeyAddress } = useTurnkeyEmailAuth();
+  const userKey = useMemo(
+    () => account?.address ?? solanaPublicKey?.toBase58() ?? turnkeyAddress ?? null,
+    [account?.address, solanaPublicKey, turnkeyAddress]
+  );
+
   const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [prompt, setPrompt] = useState("A photograph of [subject] at [location], [mood], lit by [lighting].");
   const [vars, setVars] = useState<Record<string, string>>({});
-  
+
   // Settings
   const [model, setModel] = useState("nano-banana-pro");
   const [ratio, setRatio] = useState("1:1");
   const [resolution, setResolution] = useState("2K");
   const [qty, setQty] = useState(1);
-  
+
   // Image Selection Mode: 'upload' | 'nft'
   const [imgMode, setImgMode] = useState<"upload" | "nft">("upload");
   const [images, setImages] = useState<(string | null)[]>(Array(4).fill(null));
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+
+  const generate = async () => {
+    if (generating) return;
+    setGenerating(true);
+    try {
+      const final = prompt.replace(/\[[^\]]+\]|\{[^\}]+\}|\([^\)]+\)/gi, (m) => {
+        const key = m.trim();
+        return vars[key] || m;
+      });
+      const res = await fetch("/api/generate-free", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: final.trim(), aspectRatio: ratio, resolution }),
+      });
+      if (!res.ok) throw new Error("Generation failed");
+      const data = await res.json();
+      if (!data.imageUrl) throw new Error("No image returned");
+      if (userKey) {
+        addCreation(userKey, { id: `qc-${Date.now()}`, imageUrl: data.imageUrl, prompt: final, createdAt: new Date().toISOString() });
+        window.dispatchEvent(new Event("gallery-refresh"));
+      }
+      toast({ title: "Generated & Saved to Gallery", description: "Your image is ready." });
+      setOpen(false);
+    } catch (e: any) {
+      toast({ title: "Generation Failed", description: e.message, variant: "destructive" });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   // Variable parsing: support [], (), {} with stable IDs
   const [detectedVariables, setDetectedVariables] = useState<any[]>([]);
@@ -264,8 +308,13 @@ export default function EnkiQuickCreate() {
                   </div>
                 </div>
 
-                <button className="enki-qc-generate-btn-v3">
-                  Generate / ${totalCost.toFixed(2)}
+                <button
+                  className="enki-qc-generate-btn-v3"
+                  onClick={generate}
+                  disabled={generating}
+                  style={{ opacity: generating ? 0.6 : 1, cursor: generating ? "wait" : "pointer" }}
+                >
+                  {generating ? "Generating..." : `Generate / $${totalCost.toFixed(2)}`}
                 </button>
               </div>
 

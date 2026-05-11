@@ -16,6 +16,7 @@ import {
   Sun,
   Moon,
   Check,
+  Images,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -268,6 +269,9 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
 
             {isDesktop && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: 4, marginRight: 6 }}>
+                <button onClick={() => router.push("/my-gallery")} title="My Gallery" style={{ background: "none", border: "none", cursor: "pointer", color: iconColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <Images size={18} />
+                </button>
                 <button onClick={() => router.push("/leaderboard")} title="Leaderboard" style={{ background: "none", border: "none", cursor: "pointer", color: iconColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Trophy size={18} />
                 </button>
@@ -305,6 +309,9 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
 
             {isTablet && (
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginRight: 4 }}>
+                <button onClick={() => router.push("/my-gallery")} title="My Gallery" style={{ color: iconColor, background: "none", border: "none" }}>
+                  <Images size={16} />
+                </button>
                 <button onClick={() => router.push("/leaderboard")} title="Leaderboard" style={{ color: iconColor, background: "none", border: "none" }}>
                   <Trophy size={16} />
                 </button>
@@ -393,7 +400,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                 <div style={{ padding: "8px 0" }}>
                   {[
                     { label: "My profile", href: "/profile" },
-                    { label: "Favorites", href: "/my-gallery" },
+                    { label: "My Gallery", href: "/my-gallery" },
                     { label: "Settings", href: "/settings" }
                   ].map((link) => (
                     <DropdownMenuItem 
