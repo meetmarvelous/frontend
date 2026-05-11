@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { decryptPrompt, isEncryptionConfigured } from "@/backend/encryption";
 
 type PatchBody = {
   title?: string;
@@ -62,11 +63,33 @@ export async function GET(
       allowReferenceImage: false,
     }));
 
+    // For free/showcase prompts, decrypt and include the public prompt text
+    let publicPromptText: string | undefined;
+    const isFree =
+      prompt.prompt_type === "showcase" ||
+      prompt.prompt_type === "free-prompt" ||
+      prompt.is_free_showcase === true;
+
+    if (isFree && prompt.content && prompt.iv && prompt.auth_tag) {
+      try {
+        if (isEncryptionConfigured()) {
+          publicPromptText = decryptPrompt({
+            encryptedContent: prompt.content,
+            iv: prompt.iv,
+            authTag: prompt.auth_tag,
+          });
+        }
+      } catch (decryptError) {
+        console.warn("Failed to decrypt free prompt content:", decryptError);
+      }
+    }
+
     // Return prompt with nested promptData.variables for GeneratorInterface compatibility
     return NextResponse.json({
       prompt: {
         ...prompt,
         _id: prompt.id,
+        publicPromptText,
         promptData: {
           variables: mappedVariables,
         },

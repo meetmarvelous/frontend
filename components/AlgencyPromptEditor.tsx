@@ -26,7 +26,7 @@ import nlp from "compromise";
 
 
 /* ─── Types ─── */
-type VariableType = "text" | "checkbox";
+type VariableType = "text" | "checkbox" | "image";
 type PromptType = "free-prompt" | "premium-prompt";
 
 interface PromptVariable {
@@ -183,15 +183,15 @@ export default function AlgencyPromptEditor() {
     });
   };
 
-  /* ─── Real-time Variable Sync — detects [], {}, and () brackets ─── */
+  /* ─── Real-time Variable Sync — detects [] brackets only ─── */
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      // Universal bracket regex: [content], {content}, (content)
-      const regex = /(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/gi;
+      // Only detect square brackets as variables: [content]
+      const regex = /\[([^\]]+)\]/g;
       const detections: { content: string; full: string }[] = [];
       let match;
       while ((match = regex.exec(promptData.body)) !== null) {
-        const content = match[1] || match[2] || match[3];
+        const content = match[1];
         if (content) detections.push({ content, full: match[0] });
       }
 
@@ -260,11 +260,11 @@ export default function AlgencyPromptEditor() {
 
     // Check if we are deleting the closing bracket of a variable
     const charBefore = text[pos - 1];
-    const isClosing = charBefore === ']' || charBefore === '}' || charBefore === ')';
+    const isClosing = charBefore === ']';
     
     if (isClosing) {
       // Find the start of the bracket group
-      const openChar = charBefore === ']' ? '[' : charBefore === '}' ? '{' : '(';
+      const openChar = '[';
       let startPos = pos - 2;
       while (startPos >= 0 && text[startPos] !== openChar) startPos--;
       
@@ -299,7 +299,7 @@ export default function AlgencyPromptEditor() {
 
     // Auto-select variable if cursor is inside one
     const text = promptData.body;
-    const regex = /(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/gi;
+    const regex = /\[([^\]]+)\]/g;
     let match;
     let foundVarId = null;
     while ((match = regex.exec(text)) !== null) {
@@ -392,9 +392,14 @@ export default function AlgencyPromptEditor() {
     let previewText = promptData.body;
     variables.forEach((variable) => {
       const placeholder = `[${variable.name}]`;
-      const display = variable.type === "text"
-        ? (variable.defaultValue as string) || ""
-        : (variable.defaultValue as boolean) ? variable.description : "";
+      let display = "";
+      if (variable.type === "text") {
+        display = (variable.defaultValue as string) || "";
+      } else if (variable.type === "image") {
+        display = variable.description || "";
+      } else if (variable.type === "checkbox") {
+        display = variable.defaultValue ? variable.description : "";
+      }
       previewText = previewText.split(placeholder).join(display);
     });
     return previewText;
@@ -468,10 +473,10 @@ export default function AlgencyPromptEditor() {
   };
 
   const renderPromptWithTags = () => {
-    // Split on [], {}, and () bracket groups
-    const parts = promptData.body.split(/((?:\[[^\]]+\]|\{[^\}]+\}|\([^\)]+\)))/i);
+    // Split on [] bracket groups only
+    const parts = promptData.body.split(/(\[[^\]]+\])/g);
     return parts.map((part, index) => {
-      const match = part.match(/(?:\[([^\]]+)\]|\{([^\}]+)\}|\(([^\)]+)\))/i);
+      const match = part.match(/\[([^\]]+)\]/);
       if (match) {
         const variable = variables.find(v => v.fullToken === part);
         const isSelected = ui.selectedVariableId === variable?.id;
@@ -501,8 +506,16 @@ export default function AlgencyPromptEditor() {
     let previewText = promptData.body;
     variables.forEach((variable) => {
       const placeholder = `[${variable.name}]`;
-      const val = snapshot[variable.name] ??
-        (variable.type === "text" ? (variable.defaultValue as string) : (variable.defaultValue ? variable.description : ""));
+      let val: string;
+      if (snapshot[variable.name] !== undefined) {
+        val = snapshot[variable.name];
+      } else if (variable.type === "text") {
+        val = (variable.defaultValue as string) || "";
+      } else if (variable.type === "image") {
+        val = variable.description || "";
+      } else {
+        val = variable.defaultValue ? variable.description : "";
+      }
       previewText = previewText.split(placeholder).join(val);
     });
 
@@ -595,6 +608,7 @@ export default function AlgencyPromptEditor() {
     const v = variables.find(x => x.name === name);
     if (!v) return name;
     if (v.type === "checkbox") return v.defaultValue ? "on" : "off";
+    if (v.type === "image") return v.description || name;
     return (v.defaultValue as string) || name;
   };
 
@@ -613,6 +627,8 @@ export default function AlgencyPromptEditor() {
         variables.forEach(v => {
         if (v.type === "checkbox") {
           snapshot[v.name] = v.defaultValue ? v.description || "on" : "off";
+        } else if (v.type === "image") {
+          snapshot[v.name] = v.description || "";
         } else {
           const pool = v.values.length > 0 ? v.values : [(v.defaultValue as string) || v.name];
           snapshot[v.name] = pool[i % pool.length];
@@ -1125,16 +1141,29 @@ export default function AlgencyPromptEditor() {
                     </button>
                     <button
                       className={`alg-type-toggle__btn ${variable.type === "checkbox" ? "alg-type-toggle__btn--active" : ""}`}
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        updateVariable(variable.id, { 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateVariable(variable.id, {
                           type: "checkbox",
                           description: String(variable.defaultValue || variable.description || variable.label),
                           defaultValue: true
-                        }); 
+                        });
                       }}
                     >
                       Yes / No checkbox
+                    </button>
+                    <button
+                      className={`alg-type-toggle__btn ${variable.type === "image" ? "alg-type-toggle__btn--active" : ""}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateVariable(variable.id, {
+                          type: "image",
+                          defaultValue: "",
+                          description: String(variable.description || variable.label),
+                        });
+                      }}
+                    >
+                      Image upload
                     </button>
                   </div>
 
@@ -1142,13 +1171,74 @@ export default function AlgencyPromptEditor() {
                   <div className="alg-var-card__label">DEFAULT VALUE</div>
                   {variable.type === "text" ? (
                     <>
-                      <input 
+                      <input
                         className="alg-var-card__default-input"
                         value={String(variable.defaultValue || "")}
                         onChange={(e) => updateVariable(variable.id, { defaultValue: e.target.value })}
                         placeholder="e.g. a young woman..."
                       />
                       <div className="alg-var-card__hint">Used until the buyer changes it.</div>
+                    </>
+                  ) : variable.type === "image" ? (
+                    <>
+                      <div
+                        style={{
+                          border: "1px dashed var(--alg-border)",
+                          borderRadius: 8,
+                          padding: 12,
+                          textAlign: "center",
+                          cursor: "pointer",
+                          position: "relative",
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const input = document.createElement("input");
+                          input.type = "file";
+                          input.accept = "image/*";
+                          input.onchange = (ev) => {
+                            const file = (ev.target as HTMLInputElement).files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (le) => {
+                              const dataUrl = String(le.target?.result || "");
+                              updateVariable(variable.id, { defaultValue: dataUrl });
+                            };
+                            reader.readAsDataURL(file);
+                          };
+                          input.click();
+                        }}
+                      >
+                        {variable.defaultValue ? (
+                          <img
+                            src={String(variable.defaultValue)}
+                            alt="Preview"
+                            style={{ maxHeight: 120, maxWidth: "100%", borderRadius: 4, objectFit: "cover" }}
+                          />
+                        ) : (
+                          <div style={{ fontSize: 12, color: "var(--alg-hint)" }}>
+                            Click to upload a reference image
+                          </div>
+                        )}
+                      </div>
+                      {variable.defaultValue && (
+                        <button
+                          style={{
+                            marginTop: 8,
+                            fontSize: 11,
+                            color: "var(--alg-accent)",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateVariable(variable.id, { defaultValue: "" });
+                          }}
+                        >
+                          Remove image
+                        </button>
+                      )}
+                      <div className="alg-var-card__hint">Buyers can upload their own reference image.</div>
                     </>
                   ) : (
                     <>
@@ -1163,7 +1253,7 @@ export default function AlgencyPromptEditor() {
                           <span>Default: <span style={{ fontWeight: 600, color: 'var(--alg-dark)' }}>{variable.defaultValue ? "on" : "off"}</span></span>
                         </label>
                       </div>
-                      <textarea 
+                      <textarea
                         className="alg-var-card__desc-input"
                         value={variable.description}
                         onChange={(e) => updateVariable(variable.id, { description: e.target.value })}

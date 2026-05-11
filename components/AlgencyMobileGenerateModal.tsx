@@ -54,12 +54,12 @@ export default function AlgencyMobileGenerateModal({
 
   // Helper to render prompt with pills
   const renderPromptWithPills = () => {
-    // A simple regex to replace [bracketed] variables with pills
-    const parts = promptBody.split(/(\[[a-z_0-9]+\]|\{[a-z_0-9]+\}|<[a-z_0-9]+>)/gi);
+    // Only detect [square bracket] variables as pills
+    const parts = promptBody.split(/(\[[a-z_0-9]+\])/gi);
     return (
       <div className="mobile-modal-prompt-text">
         {parts.map((part, index) => {
-          if (part.match(/^(\[|\{|<)[a-z_0-9]+(\]|\}|>)$/i)) {
+          if (part.match(/^\[[a-z_0-9]+\]$/i)) {
             return (
               <span key={index} className="mobile-modal-pill">
                 {part}

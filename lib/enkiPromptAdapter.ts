@@ -16,7 +16,7 @@ export type EnkiArtist = {
 export type EnkiPromptVariable = {
   name: string;
   label: string;
-  type: "text" | "checkbox";
+  type: "text" | "checkbox" | "image";
   value: string | boolean;
 };
 

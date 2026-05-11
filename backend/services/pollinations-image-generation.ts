@@ -36,6 +36,14 @@ function getDimensions(aspectRatio: string, resolution: string): { width: number
       return { width: Math.round(baseSize * (4 / 3)), height: baseSize };
     case '3:4':
       return { width: baseSize, height: Math.round(baseSize * (4 / 3)) };
+    case '4:5':
+      return { width: baseSize, height: Math.round(baseSize * (5 / 4)) };
+    case '2:3':
+      return { width: baseSize, height: Math.round(baseSize * (3 / 2)) };
+    case '2.39:1':
+      return { width: Math.round(baseSize * 2.39), height: baseSize };
+    case '1:2.39':
+      return { width: baseSize, height: Math.round(baseSize * 2.39) };
     case '1:1':
     default:
       return { width: baseSize, height: baseSize };

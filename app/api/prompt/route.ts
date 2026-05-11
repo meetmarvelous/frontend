@@ -5,6 +5,7 @@ import { getSupabaseServerClient } from "@/lib/supabaseServer";
 type VariableType =
   | "text"
   | "checkbox"
+  | "image"
   | "multi-select"
   | "single-select"
   | "slider";

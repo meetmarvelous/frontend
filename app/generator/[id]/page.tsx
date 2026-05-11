@@ -1,10 +1,8 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import GeneratorInterface from "@/components/GeneratorInterface";
-import { useParams } from "next/navigation";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import PromptGeneratorView from "@/components/PromptGeneratorView";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -32,33 +30,44 @@ export default function Generator() {
 
   if (promptLoading) {
     return (
-      <div className="min-h-screen bg-background pt-16">
-        <Navbar />
-        <main className="w-full px-6 lg:px-8 py-4 flex items-center justify-center">
-          <p className="text-foreground text-lg" data-testid="text-loading">
-            Loading prompt...
-          </p>
-        </main>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--pg-bg, #f7f6f1)",
+          fontFamily: "'Space Mono', monospace",
+          fontSize: 13,
+          color: "#666",
+        }}
+      >
+        Loading prompt...
       </div>
     );
   }
 
   if (promptError || !prompt) {
     return (
-      <div className="min-h-screen bg-background pt-16">
-        <Navbar />
-        <main className="w-full px-6 lg:px-8 py-4 flex flex-col items-center justify-center gap-4">
-          <p className="text-foreground text-lg" data-testid="text-error">
-            Prompt not found
-          </p>
-          <Button
-            onClick={() => router.push("/showcase")}
-            data-testid="button-back-gallery"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Gallery
-          </Button>
-        </main>
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          background: "var(--pg-bg, #f7f6f1)",
+        }}
+      >
+        <p style={{ fontSize: 16, color: "#111" }}>Prompt not found</p>
+        <Button
+          onClick={() => router.push("/showcase")}
+          data-testid="button-back-gallery"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Gallery
+        </Button>
       </div>
     );
   }
@@ -68,7 +77,6 @@ export default function Generator() {
     creatorData?.user?.profile?.displayName ||
     creatorData?.user?.profile?.username ||
     "Unknown Artist";
-  const artistId = creatorId;
 
   const primaryImage = prompt.showcaseImages?.find(
     (img: any) => img.isPrimary === true
@@ -77,23 +85,20 @@ export default function Generator() {
   const imageUrl = thumbnailImage?.thumbnail || thumbnailImage?.url || "";
 
   const allShowcaseImages = prompt.showcaseImages || [];
-
-  const isFreeShowcase = prompt.type === "showcase";
+  const isFreeShowcase =
+    prompt.type === "showcase" ||
+    prompt.prompt_type === "showcase" ||
+    prompt.is_free_showcase === true;
 
   return (
-    <div className="h-screen bg-background overflow-hidden flex flex-col pt-14">
-      <main className="flex-1 overflow-hidden">
-        <GeneratorInterface
-          promptId={promptIdString}
-          title={prompt.title}
-          artistName={artistName}
-          artistId={artistId}
-          imageUrl={imageUrl}
-          showcaseImages={allShowcaseImages}
-          isFreeShowcase={isFreeShowcase}
-          publicPromptText={undefined}
-        />
-      </main>
-    </div>
+    <PromptGeneratorView
+      promptId={promptIdString}
+      title={prompt.title}
+      artistName={artistName}
+      artistId={creatorId}
+      imageUrl={imageUrl}
+      showcaseImages={allShowcaseImages}
+      isFreeShowcase={isFreeShowcase}
+    />
   );
 }

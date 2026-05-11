@@ -64,41 +64,52 @@ export default function MyGalleryPage() {
     const load = async () => {
       setIsLoading(true);
       setFetchError(null);
+
+      /* Always start with localStorage so wallet users always see their images */
+      const local = listCreations(userKey);
+
       try {
-        const res = await fetch(`/api/generations?userKey=${encodeURIComponent(userKey)}`);
+        const res = await fetch(`/api/generations?userId=${encodeURIComponent(userKey)}&limit=100`);
         if (!res.ok) {
           const errBody = await res.json().catch(() => ({}));
           throw new Error(errBody.error || `Server responded with ${res.status}`);
         }
-        const json = (await res.json()) as { generations?: SupabaseGeneration[] };
-        const generations = Array.isArray(json.generations) 
-          ? json.generations 
-          : Array.isArray((json as any).items) 
-            ? (json as any).items 
-            : [];
-        
-        const mapped: StoredCreation[] = generations.map((g: SupabaseGeneration) => {
-          const imageUrl = g.image_urls && g.image_urls.length > 0
-            ? g.image_urls[0]
-            : g.image_url || "";
-          
-          const prompt = g.final_prompt || (g as any).prompt || "";
-          
-          return {
-            id: String(g.id),
-            imageUrl: String(imageUrl),
-            prompt: typeof prompt === "string" ? prompt : "",
-            createdAt: typeof g.created_at === "string" ? g.created_at : new Date().toISOString(),
-            isUploaded: g.settings?.origin === 'uploaded' || g.status === 'uploaded',
-          };
-        });
-        if (!cancelled) setItems(mapped);
+        const json = await res.json();
+        /* Handle both direct shape and createSuccessResponse wrapper { data: { generations } } */
+        const raw = json?.data?.generations ?? json?.generations ?? json?.items ?? [];
+        const generations: SupabaseGeneration[] = Array.isArray(raw) ? raw : [];
+
+        const dbMapped: StoredCreation[] = generations
+          .filter((g) => g.image_urls?.length || g.image_url)
+          .map((g) => {
+            const imageUrl = g.image_urls && g.image_urls.length > 0
+              ? g.image_urls[0]
+              : g.image_url || "";
+            const prompt = g.final_prompt || (g as any).prompt || "";
+            return {
+              id: String(g.id),
+              imageUrl: String(imageUrl),
+              prompt: typeof prompt === "string" ? prompt : "",
+              createdAt: typeof g.created_at === "string" ? g.created_at : new Date().toISOString(),
+              isUploaded: g.settings?.origin === "uploaded" || g.status === "uploaded",
+            };
+          });
+
+        /* Merge: DB first, then local-only items not already in DB (dedup by imageUrl) */
+        const dbUrls = new Set(dbMapped.map((c) => c.imageUrl));
+        const localOnly = local.filter((c) => c.imageUrl && !dbUrls.has(c.imageUrl));
+        const merged = [...dbMapped, ...localOnly].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        if (!cancelled) setItems(merged);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        console.error('Gallery fetch error:', message);
+        console.error("Gallery fetch error:", message);
+        /* On any DB error fall back to localStorage entirely */
         if (!cancelled) {
           setFetchError(message);
-          setItems(listCreations(userKey));
+          setItems(local);
         }
       } finally {
         if (!cancelled) setIsLoading(false);

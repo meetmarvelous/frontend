@@ -9,7 +9,7 @@
   --enki-rule-2: #ebe5d8;
   --enki-ember: #c96838;
   min-height: 100vh;
-  padding-top: 170px;
+  padding-top: 120px;
   background: var(--enki-paper);
   color: var(--enki-ink);
   font-family: var(--font-sans);
@@ -76,33 +76,38 @@
 .enki-catbar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 32px;
-  padding: 8px 40px;
-  background: transparent;
-  border: none;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 0 24px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(64px) saturate(200%);
+  -webkit-backdrop-filter: blur(64px) saturate(200%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 0;
   box-shadow: none;
   position: fixed;
-  top: 88px;
+  top: 64px;
   left: 0;
   right: 0;
   width: 100%;
   z-index: 45;
   pointer-events: all;
   opacity: 1;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+  visibility: visible;
 }
 
 .dark .enki-catbar {
-  background: transparent;
-  border-bottom: none;
+  background: rgba(10, 10, 12, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .enki-catbar--hidden {
   opacity: 0;
-  transform: translateY(-12px);
+  transform: translateY(-8px);
   pointer-events: none;
+  visibility: hidden;
 }
 
 .enki-catbar > * {
@@ -113,60 +118,57 @@
 .enki-catbar-all {
   display: flex;
   align-items: center;
-  gap: 7px;
-  height: 40px;
-  padding: 0 20px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(64px);
-  -webkit-backdrop-filter: blur(64px);
-  color: rgba(0, 0, 0, 0.7);
+  gap: 6px;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: rgba(0, 0, 0, 0.4);
   font-family: var(--font-geist-sans), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: color 150ms ease, border-color 150ms ease;
   white-space: nowrap;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  flex-shrink: 0;
 }
 
 .dark .enki-catbar-all {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(19, 19, 24, 0.98);
-  color: rgba(255, 255, 255, 0.8);
+  background: none;
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .enki-catbar-all:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #111;
+  color: rgba(0, 0, 0, 0.8);
 }
 
 .dark .enki-catbar-all:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(201, 104, 56, 0.4);
-  color: #fff;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .enki-catbar-all.active {
-  background: #111;
-  color: #fff;
+  color: #111;
+  border-bottom-color: #111;
+  background: none;
 }
 
 .dark .enki-catbar-all.active {
-  background: rgba(201, 104, 56, 0.1);
-  border-color: rgba(201, 104, 56, 0.5);
-  box-shadow: 0 0 20px rgba(201, 104, 56, 0.1);
-  color: #fff;
+  color: rgba(255,255,255,0.9);
+  border-bottom-color: rgba(201, 104, 56, 0.8);
+  background: none;
 }
 
 .enki-catbar-all.active .enki-catbar-all-icon {
-  color: #d94f3d;
+  color: inherit;
 }
 
 .dark .enki-catbar-all.active .enki-catbar-all-icon {
-  color: #fff;
+  color: inherit;
 }
 
 .enki-catbar-all-icon {
@@ -176,10 +178,11 @@
 
 .enki-catbar-divider {
   width: 1px;
-  height: 20px;
+  height: 16px;
   background: rgba(0, 0, 0, 0.1);
-  margin: 0 2px;
+  margin: 0 4px;
   flex-shrink: 0;
+  align-self: center;
 }
 
 .dark .enki-catbar-divider {
@@ -202,52 +205,48 @@
 
 .enki-catbar-chip {
   flex: 0 0 auto;
-  height: 40px;
-  padding: 0 20px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(64px);
-  -webkit-backdrop-filter: blur(64px);
-  color: rgba(0, 0, 0, 0.7);
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: rgba(0, 0, 0, 0.4);
   font-family: var(--font-geist-sans), sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: color 150ms ease, border-color 150ms ease;
   white-space: nowrap;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
 .dark .enki-catbar-chip {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(19, 19, 24, 0.98);
-  color: rgba(255, 255, 255, 0.8);
+  background: none;
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .enki-catbar-chip:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #111;
+  color: rgba(0, 0, 0, 0.8);
 }
 
 .dark .enki-catbar-chip:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(201, 104, 56, 0.4);
-  color: #fff;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .enki-catbar-chip.active {
-  background: #111;
-  color: #fff;
+  color: #111;
+  border-bottom-color: #111;
+  background: none;
   font-weight: 600;
 }
 
 .dark .enki-catbar-chip.active {
-  background: rgba(201, 104, 56, 0.1);
-  border-color: rgba(201, 104, 56, 0.5);
-  box-shadow: 0 0 20px rgba(201, 104, 56, 0.1);
-  color: #fff;
+  color: rgba(255,255,255,0.9);
+  border-bottom-color: rgba(201, 104, 56, 0.8);
+  background: none;
   font-weight: 600;
 }
 
@@ -263,25 +262,34 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 44px;
   border: none;
-  border-radius: 50%;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(0, 0, 0, 0.3);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: color 150ms ease;
+  margin-left: 4px;
+}
+
+.dark .enki-catbar-more {
+  color: rgba(255, 255, 255, 0.25);
 }
 
 .enki-catbar-more:hover {
-  background: rgba(0, 0, 0, 0.06);
-  color: #111;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.dark .enki-catbar-more:hover {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .enki-masonry {
   column-count: var(--cols, 4);
   column-gap: 4px;
-  padding: 8px 0 90px;
+  padding: 4px 0 90px;
 }
 
 
@@ -293,15 +301,15 @@
   margin-bottom: 4px;
   position: relative;
   cursor: pointer;
-  border-radius: 24px;
+  border-radius: 4px;
   overflow: hidden;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .dark .enki-card {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  border: 1px solid rgba(201, 104, 56, 0.2);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
   background: transparent;
 }
 
@@ -311,8 +319,8 @@
 }
 
 .dark .enki-card:hover {
-  box-shadow: 0 16px 64px rgba(201, 104, 56, 0.15);
-  border-color: rgba(201, 104, 56, 0.6);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  border-color: rgba(255,255,255,0.1);
 }
 
 .enki-card-img {
@@ -334,17 +342,18 @@
 
 .enki-card-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.88);
   color: var(--enki-ink);
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 0.1em;
-  padding: 4px 8px;
+  padding: 3px 7px;
+  border-radius: 2px;
   text-transform: uppercase;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -367,12 +376,12 @@
   align-items: center;
   gap: 4px;
   border-radius: 2px;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: 10px;
-  letter-spacing: 0.04em;
-  padding: 3px 7px;
-  backdrop-filter: blur(4px);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  padding: 3px 6px;
+  backdrop-filter: blur(6px);
 }
 
 .enki-card-stat-price {
@@ -386,17 +395,18 @@
   top: 8px;
   right: 8px;
   z-index: 3;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.85);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.88);
   color: var(--enki-ink-2);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
+  transition: background 0.15s, color 0.15s;
 }
 
 .enki-heart.active {
@@ -1800,7 +1810,7 @@
   .enki-masonry {
     column-count: 2 !important;
     column-gap: 12px;
-    padding-top: 14px;
+    padding-top: 4px;
     padding-bottom: 96px;
   }
 

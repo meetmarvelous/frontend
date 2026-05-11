@@ -172,31 +172,148 @@ export async function GET(request: NextRequest) {
     // Execute search query
     let prompts: any[] = [];
     try {
-      // Return mock data since storage methods are not implemented yet
-      prompts = [
-        { id: "p1", title: "Cinematic Table Setup", priceUsdCents: 500, category: "Cinematic", tags: ["cinematic", "interior"], previewImageUrl: "https://images.unsplash.com/photo-1507608172909-5c74232bd868?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p2", title: "Brutalist Architecture", priceUsdCents: 1000, category: "Architecture", tags: ["architecture", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p3", title: "Portrait of Light", priceUsdCents: 750, category: "Portrait", tags: ["portrait", "soft"], previewImageUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p4", title: "Abstract Geometry", priceUsdCents: 1200, category: "Abstract", tags: ["abstract", "geometry"], previewImageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p5", title: "Modern Minimalist Lobby", priceUsdCents: 850, category: "Architecture", tags: ["architecture", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p6", title: "Editorial Fashion Shot", priceUsdCents: 1500, category: "Editorial", tags: ["editorial", "fashion"], previewImageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p7", title: "Quiet Window Study", priceUsdCents: 450, category: "Interior", tags: ["interior", "soft"], previewImageUrl: "https://images.unsplash.com/photo-1470252656220-db63b3d11b33?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p8", title: "Cyberpunk Street Still", priceUsdCents: 900, category: "Cinematic", tags: ["cinematic", "cyberpunk"], previewImageUrl: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p9", title: "Monochrome Archive", priceUsdCents: 600, category: "Abstract", tags: ["abstract", "monochrome"], previewImageUrl: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p10", title: "Zen Garden Architecture", priceUsdCents: 1100, category: "Architecture", tags: ["architecture", "zen"], previewImageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p11", title: "Vibrant Color Wash", priceUsdCents: 350, category: "Abstract", tags: ["abstract", "vibrant"], previewImageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-        { id: "p12", title: "Product Focus Minimal", priceUsdCents: 550, category: "Product", tags: ["product", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1523633589114-88e225471a4f?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
-      ];
+      const supabase = getSupabaseServerClient();
+
+      // Build Supabase query
+      let dbQuery = supabase.from("prompts").select("*");
+
+      if (category) {
+        dbQuery = dbQuery.eq("category", category);
+      }
+
+      if (tags && tags.length > 0) {
+        dbQuery = dbQuery.overlaps("tags", tags);
+      }
+
+      if (priceFilter === "free") {
+        dbQuery = dbQuery.eq("price", 0);
+      } else if (priceFilter === "paid") {
+        dbQuery = dbQuery.gt("price", 0);
+      } else if (minPrice !== undefined || maxPrice !== undefined) {
+        if (minPrice !== undefined) dbQuery = dbQuery.gte("price", minPrice);
+        if (maxPrice !== undefined) dbQuery = dbQuery.lte("price", maxPrice);
+      }
+
+      if (query && query.trim()) {
+        dbQuery = dbQuery.ilike("title", `%${query.trim()}%`);
+      }
+
+      // Sort
+      switch (sortBy) {
+        case "newest":
+          dbQuery = dbQuery.order("created_at", { ascending: false });
+          break;
+        case "popular":
+          dbQuery = dbQuery.order("downloads", { ascending: false });
+          break;
+        case "price_low":
+          dbQuery = dbQuery.order("price", { ascending: true });
+          break;
+        case "price_high":
+          dbQuery = dbQuery.order("price", { ascending: false });
+          break;
+        case "trending":
+        default:
+          dbQuery = dbQuery.order("created_at", { ascending: false });
+          break;
+      }
+
+      dbQuery = dbQuery.limit(limit);
+
+      const { data: dbPrompts, error: dbError } = await dbQuery;
+
+      if (dbError) {
+        console.error("Supabase query error:", dbError);
+        throw dbError;
+      }
+
+      if (Array.isArray(dbPrompts) && dbPrompts.length > 0) {
+        prompts = dbPrompts.map((p) => ({
+          id: p.id,
+          title: p.title,
+          description: p.public_prompt_text || "",
+          promptTemplate: p.public_prompt_text || "",
+          priceUsdCents: typeof p.price === "number" ? p.price : 0,
+          category: p.category || "",
+          tags: Array.isArray(p.tags) ? p.tags : [],
+          totalSales: typeof p.downloads === "number" ? p.downloads : 0,
+          avgRating: typeof p.rating === "number" ? p.rating : 0,
+          createdAt: p.created_at,
+          listedAt: p.created_at,
+          userId: p.user_id,
+          previewImages: Array.isArray(p.uploaded_photos)
+            ? p.uploaded_photos.map((url: string) => ({ url }))
+            : [],
+          showcaseImages: Array.isArray(p.uploaded_photos)
+            ? p.uploaded_photos.map((url: string) => ({ url }))
+            : [],
+          aiModel: p.ai_model,
+          model: p.ai_model,
+          aspectRatio: p.aspect_ratio,
+          resolution: p.resolution,
+          isFreeShowcase: Boolean(p.is_free_showcase),
+          promptType: p.prompt_type,
+          isVideo: false,
+        }));
+      }
+
+      // Fallback to mock data if DB is empty
+      if (prompts.length === 0) {
+        prompts = [
+          { id: "p1", title: "Cinematic Table Setup", priceUsdCents: 500, category: "Cinematic", tags: ["cinematic", "interior"], previewImageUrl: "https://images.unsplash.com/photo-1507608172909-5c74232bd868?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p2", title: "Brutalist Architecture", priceUsdCents: 1000, category: "Architecture", tags: ["architecture", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p3", title: "Portrait of Light", priceUsdCents: 750, category: "Portrait", tags: ["portrait", "soft"], previewImageUrl: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p4", title: "Abstract Geometry", priceUsdCents: 1200, category: "Abstract", tags: ["abstract", "geometry"], previewImageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p5", title: "Modern Minimalist Lobby", priceUsdCents: 850, category: "Architecture", tags: ["architecture", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p6", title: "Editorial Fashion Shot", priceUsdCents: 1500, category: "Editorial", tags: ["editorial", "fashion"], previewImageUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p7", title: "Quiet Window Study", priceUsdCents: 450, category: "Interior", tags: ["interior", "soft"], previewImageUrl: "https://images.unsplash.com/photo-1470252656220-db63b3d11b33?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p8", title: "Cyberpunk Street Still", priceUsdCents: 900, category: "Cinematic", tags: ["cinematic", "cyberpunk"], previewImageUrl: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p9", title: "Monochrome Archive", priceUsdCents: 600, category: "Abstract", tags: ["abstract", "monochrome"], previewImageUrl: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p10", title: "Zen Garden Architecture", priceUsdCents: 1100, category: "Architecture", tags: ["architecture", "zen"], previewImageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p11", title: "Vibrant Color Wash", priceUsdCents: 350, category: "Abstract", tags: ["abstract", "vibrant"], previewImageUrl: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+          { id: "p12", title: "Product Focus Minimal", priceUsdCents: 550, category: "Product", tags: ["product", "minimal"], previewImageUrl: "https://images.unsplash.com/photo-1523633589114-88e225471a4f?auto=format&fit=crop&q=80&w=800", listedAt: new Date() },
+        ];
+      }
     } catch (searchError) {
       console.error('Search query failed:', searchError);
     }
 
-    // Enrich with creator data
+    // Enrich with creator data and variables
     const supabase = getSupabaseServerClient();
+
+    // Batch-fetch variables for all returned prompts
+    const promptIds = prompts.map((p: any) => p.id).filter(Boolean);
+    let variablesMap: Record<string, any[]> = {};
+    if (promptIds.length > 0) {
+      try {
+        const { data: varsData } = await supabase
+          .from("variables")
+          .select("prompt_id,name,label,description,type,default_value,required,position")
+          .in("prompt_id", promptIds)
+          .order("position", { ascending: true });
+        if (Array.isArray(varsData)) {
+          varsData.forEach((v) => {
+            const pid = String(v.prompt_id);
+            if (!variablesMap[pid]) variablesMap[pid] = [];
+            variablesMap[pid].push({
+              name: String(v.name ?? ""),
+              label: String(v.label ?? v.name ?? ""),
+              description: String(v.description ?? ""),
+              type: String(v.type ?? "text"),
+              defaultValue: v.default_value ?? null,
+              required: Boolean(v.required ?? false),
+              position: typeof v.position === "number" ? v.position : 0,
+            });
+          });
+        }
+      } catch (e) {
+        console.error("Variable fetch error:", e);
+      }
+    }
+
     const enrichedPrompts = await Promise.all(
       prompts.map(async (prompt: any) => {
         try {
-          // Get creator info from Supabase
           const { data: creatorData } = await supabase
             .from('users')
             .select('id, username, display_name, avatar_url')
@@ -207,6 +324,7 @@ export async function GET(request: NextRequest) {
             id: prompt.id || prompt._id?.toString(),
             title: prompt.title,
             description: prompt.description,
+            promptTemplate: prompt.promptTemplate || prompt.description,
             priceUsdCents: prompt.priceUsdCents,
             licenseType: prompt.licenseType || 'personal',
             category: prompt.category,
@@ -224,16 +342,23 @@ export async function GET(request: NextRequest) {
               avatarUrl: creatorData.avatar_url,
             } : null,
             previewImages: prompt.previewImages || prompt.showcaseImages || [],
-            // Search relevance score (if available)
+            showcaseImages: prompt.showcaseImages || prompt.previewImages || [],
+            model: prompt.model || prompt.aiModel,
+            aspectRatio: prompt.aspectRatio,
+            resolution: prompt.resolution,
+            isFreeShowcase: prompt.isFreeShowcase,
+            promptType: prompt.promptType,
+            isVideo: prompt.isVideo,
+            variables: variablesMap[prompt.id] || [],
             relevanceScore: prompt.score || 0,
           };
         } catch (error) {
           console.error(`Error enriching prompt ${prompt.id}:`, error);
-          // Return prompt without creator data
           return {
             id: prompt.id || prompt._id?.toString(),
             title: prompt.title,
             description: prompt.description,
+            promptTemplate: prompt.promptTemplate || prompt.description,
             priceUsdCents: prompt.priceUsdCents,
             licenseType: prompt.licenseType || 'personal',
             category: prompt.category,
@@ -244,6 +369,14 @@ export async function GET(request: NextRequest) {
             listedAt: prompt.listedAt,
             creator: null,
             previewImages: prompt.previewImages || prompt.showcaseImages || [],
+            showcaseImages: prompt.showcaseImages || prompt.previewImages || [],
+            model: prompt.model || prompt.aiModel,
+            aspectRatio: prompt.aspectRatio,
+            resolution: prompt.resolution,
+            isFreeShowcase: prompt.isFreeShowcase,
+            promptType: prompt.promptType,
+            isVideo: prompt.isVideo,
+            variables: variablesMap[prompt.id] || [],
           };
         }
       })
