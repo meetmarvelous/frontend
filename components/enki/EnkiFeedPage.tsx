@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import EnkiCard from "@/components/enki/EnkiCard";
 import EnkiDetailPanel from "@/components/enki/EnkiDetailPanel";
 import EnkiFilters from "@/components/enki/EnkiFilters";
@@ -58,10 +59,22 @@ export default function EnkiFeedPage() {
     return live.length && !isError ? live : getFallbackEnkiPrompts(24);
   }, [data, isError]);
 
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.toLowerCase() || "";
+
   const visible = useMemo<EnkiPrompt[]>(() => {
-    if (!tags.length) return prompts;
-    return prompts.filter((prompt) => tags.every((tag) => prompt.tags.includes(tag)));
-  }, [prompts, tags]);
+    let filtered = prompts;
+    if (tags.length) {
+      filtered = filtered.filter((prompt) => tags.every((tag) => prompt.tags.includes(tag)));
+    }
+    if (query) {
+      filtered = filtered.filter((prompt) => 
+        prompt.title.toLowerCase().includes(query) || 
+        prompt.description.toLowerCase().includes(query)
+      );
+    }
+    return filtered;
+  }, [prompts, tags, query]);
 
   const toggleTag = (tag: string) => {
     setTags((current) => (

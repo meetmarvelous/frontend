@@ -158,8 +158,11 @@ export function useSolanaAuth() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Restore or clear session whenever the connected public key changes
-    const next = publicKey ? loadSession(publicKey.toBase58()) : null;
+    // Prefer the session matching the connected publicKey. On hard navigation the
+    // Solana adapter has autoConnect disabled, so publicKey is null even when a
+    // valid session is still in localStorage — fall back to it so the user does
+    // not appear signed out until they re-connect to sign new transactions.
+    const next = publicKey ? loadSession(publicKey.toBase58()) : loadAnySession();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSession(next);
   }, [publicKey, connected]);

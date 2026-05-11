@@ -15,6 +15,7 @@ import {
   Menu,
   Sun,
   Moon,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { ChainSwitcher } from "./ChainSwitcher";
 import { WalletPickerModal } from "./WalletPickerModal";
@@ -94,7 +95,6 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const { theme, toggleTheme } = useTheme();
   const [themeReady, setThemeReady] = useState(false);
   const [showWalletPicker, setShowWalletPicker] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const evmAuthenticated = !!account && walletInfo.isConnected;
   // Solana는 서명까지 끝나야(=session active) 인증으로 본다. 단순 connect 상태로는
@@ -103,6 +103,18 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const router = useRouter();
   const { toast } = useToast();
   const pathname = usePathname();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const walletAddress = walletInfo.address ?? solanaSessionAddress ?? turnkeyAddress ?? (solanaSessionActive ? solanaPublicKey?.toBase58() ?? null : null);
   const { isMobile, isTablet, isDesktop } = useBreakpoint();
   const isDark = themeReady && theme === "dark";
@@ -127,9 +139,8 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
 
   const NAV_LINKS = [
     { label: "DISCOVER", href: "/", disabled: false },
-    { label: "IMAGES", href: "/showcase", disabled: false },
+    { label: "IMAGES", href: "/images", disabled: false },
     { label: "VIDEOS", href: "/showcase", disabled: true, tooltip: "Video prompts will be implemented soon" },
-    { label: "FAVORITES", href: "/my-gallery", disabled: false },
   ];
 
   const visibleNavLinks = isTablet
@@ -148,28 +159,6 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
       }}>
         <div style={{ padding: isMobile ? "0 12px" : "0 8px 0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
           
-          {/* Full Width Search Overlay */}
-          {isSearchOpen && (
-            <div style={{ position: "absolute", inset: 0, padding: isMobile ? "0 12px" : "0 24px", display: "flex", alignItems: "center", background: isDark ? "rgba(13, 13, 13, 1)" : "#fff", zIndex: 10 }}>
-              <Search size={18} color={iconColor} style={{ flexShrink: 0 }} />
-              <input 
-                autoFocus
-                placeholder="Search Enki Art..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (onSearch) onSearch(searchQuery);
-                    setIsSearchOpen(false);
-                  }
-                }}
-                style={{ flex: 1, height: "100%", background: "transparent", border: "none", outline: "none", padding: "0 16px", color: isDark ? "#fff" : "#111", fontSize: 16, fontFamily: "inherit" }}
-              />
-              <button onClick={() => setIsSearchOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: iconColor, padding: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>×</span>
-              </button>
-            </div>
-          )}
 
           <div onClick={() => router.push("/")} style={{ display: "flex", alignItems: "center", gap: 2, cursor: "pointer", flexShrink: 0, zIndex: 2 }}>
             <span style={{ fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic", fontWeight: 400, fontSize: isMobile ? 22 : 28, color: isDark ? "#f1f1f3" : "#111", letterSpacing: "-0.02em" }}>
@@ -179,9 +168,9 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           </div>
 
           {!isMobile && (
-            <nav style={{ display: "flex", alignItems: "center", position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 1 }}>
+            <nav style={{ display: "flex", alignItems: "center", gap: isTablet ? 0 : 4, margin: "0 auto" }}>
               {visibleNavLinks.map(({ label, href, disabled, tooltip }) => {
-                const isActive = (label === "DISCOVER" && pathname === "/") || (label === "IMAGES" && pathname === "/showcase");
+                const isActive = (label === "DISCOVER" && pathname === "/") || (label === "IMAGES" && pathname === "/images");
                 return (
                   <button
                     key={label}
@@ -208,17 +197,59 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
           )}
 
           <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 2 : 4, flexShrink: 0, zIndex: 2 }}>
-            <button style={{
-              width: 36, height: 36, borderRadius: "50%",
-              background: "none", border: "none",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", color: iconColor, transition: "background 0.2s ease",
-            }}
-            onClick={() => setIsSearchOpen(true)}
-            onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.04)")}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "none")}>
-              <Search size={16} />
-            </button>
+            {!isMobile && (
+              <div style={{ 
+                position: "relative", 
+                width: isTablet ? 300 : 480, 
+                height: 40, 
+                display: "flex", 
+                alignItems: "center",
+                marginRight: 24,
+                padding: "0 14px",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#d8d2c5"}`,
+                borderRadius: 100,
+                background: isDark ? "rgba(255,255,255,0.05)" : "#f3efe7",
+                transition: "all 0.2s ease"
+              }}>
+                <Search size={16} color={isDark ? "#7d8a8c" : "#6b665e"} style={{ flexShrink: 0 }} />
+                <input 
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search prompts, artists..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      if (onSearch) {
+                        onSearch(searchQuery);
+                      } else {
+                        router.push(`/images?q=${encodeURIComponent(searchQuery)}`);
+                      }
+                    }
+                  }}
+                  style={{ 
+                    flex: 1, 
+                    height: "100%", 
+                    padding: "0 10px", 
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    fontSize: 14,
+                    color: isDark ? "#e8e0cc" : "#1a1715",
+                    fontFamily: "var(--font-sans)",
+                  }}
+                />
+                <span className="mono" style={{ 
+                  fontSize: 10, 
+                  color: isDark ? "#7d8a8c" : "#6b665e", 
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#d8d2c5"}`, 
+                  padding: "2px 5px", 
+                  borderRadius: 3, 
+                  whiteSpace: "nowrap",
+                  opacity: 0.8
+                }}>Ctrl K</span>
+              </div>
+            )}
 
             <button
               aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -295,22 +326,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
 
             {evmAuthenticated && <ChainSwitcher />}
 
-            {!authenticated && (
-              <button onClick={() => setShowWalletPicker(true)} style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "0 16px", height: 36,
-                background: isDark ? "rgba(255,255,255,0.05)" : "#111",
-                color: isDark ? "#fff" : "#fff",
-                border: isDark ? "1px solid rgba(255,255,255,0.1)" : "none",
-                borderRadius: 8, cursor: "pointer",
-                fontSize: 12, fontWeight: 600, fontFamily: "var(--font-geist-sans), sans-serif", letterSpacing: "0.05em", textTransform: "uppercase", whiteSpace: "nowrap",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.1)", transition: "transform 0.2s ease",
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}>
-                Connect Wallet
-              </button>
-            )}
+
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -334,75 +350,75 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     marginLeft: 4,
                   }}>
                     {authenticated && walletAddress
-                      ? walletAddress.slice(0, 2).toUpperCase()
+                      ? (walletAddress.startsWith("0x") ? walletAddress.slice(2, 4) : walletAddress.slice(0, 2)).toUpperCase()
                       : <User size={16} />}
                   </button>
                 )}
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 p-2 mt-2 rounded-[24px] border border-black/15 bg-white text-[#111] shadow-2xl dark:border-white/15 dark:bg-[#171717] dark:text-white">
-                {authenticated && walletAddress ? (
-                  <div className="px-2 py-2 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-medium">Wallet Connected</p>
+              <DropdownMenuContent 
+                align="end" 
+                className="w-72 p-0 rounded-[12px] overflow-hidden border shadow-2xl"
+                style={{
+                  background: isDark ? "#131c22" : "#faf8f4",
+                  color: isDark ? "#e8e0cc" : "#1a1715",
+                  borderColor: isDark ? "rgba(255,255,255,0.1)" : "#d8d2c5"
+                }}
+              >
+                {/* Header Section */}
+                <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#ebe5d8"}` }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: "#111", color: "#fff",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 500, fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic"
+                  }}>
+                    {walletAddress
+                      ? (walletAddress.startsWith("0x") ? walletAddress.slice(2, 4) : walletAddress.slice(0, 2)).toUpperCase()
+                      : <User size={16} />}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>
+                      {authenticated ? (username === "Artist" ? "Account" : username) : "Guest"}
                     </div>
-                    <div className="flex items-center gap-1">
-                      <code className="text-xs font-mono text-foreground/80 break-all flex-1">{walletAddress}</code>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); handleCopyAddress(); }}>
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                    <div className="mono" style={{ fontSize: 10, color: isDark ? "#7d8a8c" : "#6b665e", marginTop: 2 }}>
+                      {walletAddress
+                        ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+                        : "Not connected"}
                     </div>
                   </div>
-                ) : (
-                  <div className="px-2 py-2">
-                    <p className="text-sm font-medium">Guest</p>
-                    <p className="text-xs text-muted-foreground">Log in to save your creations</p>
-                  </div>
-                )}
-                <DropdownMenuSeparator />
+                </div>
 
-                {isMobile && (
-                  <>
-                    <DropdownMenuItem onClick={() => router.push("/editor")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <PenLine className="h-4 w-4 mr-2 text-[#d94f3d]" /> Release prompt
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/leaderboard")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <Trophy className="h-4 w-4 mr-2 text-[#d94f3d]" /> Leaderboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/referrals")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <Users className="h-4 w-4 mr-2 text-[#d94f3d]" /> Referrals
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/feedback")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <MessageSquareHeart className="h-4 w-4 mr-2 text-[#d94f3d]" /> Feedback
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                  </>
-                )}
 
-                <DropdownMenuItem onClick={() => router.push("/my-gallery")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">My Gallery</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/my-prompts")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">My Prompts</DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                <DropdownMenuItem onClick={() => router.push("/leaderboard")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <Trophy className="h-4 w-4 mr-2 text-[#d94f3d]" /> Leaderboard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/referrals")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <Users className="h-4 w-4 mr-2 text-[#d94f3d]" /> Referrals
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/feedback")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <MessageSquareHeart className="h-4 w-4 mr-2 text-[#111] dark:text-white" /> Earn for feedback
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                <DropdownMenuItem onClick={() => router.push("/settings")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">Settings</DropdownMenuItem>
-
-                {((authenticated && account) || solanaConnected || solanaSessionActive || !!turnkeyAddress) && (
-                  <>
-                    <DropdownMenuSeparator className="bg-black/5" />
+                {/* Links Section */}
+                <div style={{ padding: "8px 0" }}>
+                  {[
+                    { label: "My profile", href: "/profile" },
+                    { label: "Favorites", href: "/my-gallery" },
+                    { label: "Settings", href: "/settings" }
+                  ].map((link) => (
+                    <DropdownMenuItem 
+                      key={link.label}
+                      onClick={() => router.push(link.href)}
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{ 
+                        padding: "10px 20px", 
+                        fontSize: 14, 
+                        fontWeight: 400, 
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "inherit"
+                      }}
+                    >
+                      {link.label}
+                    </DropdownMenuItem>
+                  ))}
+                  
+                  {authenticated ? (
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
                           if (turnkeyAddress) { clearTurnkeyAuth(); toast({ title: "Signed out" }); return; }
                           if (solanaConnected || solanaSessionActive) {
-                            // 세션 정리 후 어댑터 disconnect까지 강제 실행. 둘 다 실패해도 다음 단계로.
                             await solanaSessionLogout().catch(() => {});
                             await solanaDisconnect().catch(() => {});
                           }
@@ -411,23 +427,41 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                           toast({ title: "Wallet disconnected" });
                         } catch { window.location.reload(); }
                       }}
-                      className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50 rounded-xl mt-1"
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: 14,
+                        fontWeight: 400,
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8
+                      }}
                     >
-                      <LogOut className="h-4 w-4 mr-2" /> {turnkeyAddress ? "Sign Out" : "Disconnect Wallet"}
+                      <LogOut size={14} /> Sign out
                     </DropdownMenuItem>
-                  </>
-                )}
-                {!authenticated && (
-                  <div className="px-2 py-1.5">
-                    <Button
-                      className="w-full bg-[#C7663A] hover:bg-[#A3522E] text-white rounded-none h-8 text-[10px] font-mono uppercase tracking-wider"
-                      size="sm"
+                  ) : (
+                    <DropdownMenuItem
                       onClick={() => setShowWalletPicker(true)}
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#c96838",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
                     >
-                      Connect Wallet
-                    </Button>
-                  </div>
-                )}
+                      <Wallet size={14} /> Connect Wallet
+                    </DropdownMenuItem>
+                  )}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

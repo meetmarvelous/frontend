@@ -257,42 +257,35 @@
 
 /* Custom Toggle Switch */
 .set-toggle {
-  width: 44px;
-  height: 24px;
-  background: #fff;
-  border: 2px solid #111;
-  border-radius: 12px;
+  width: 38px;
+  height: 20px;
+  background: #e2e0d9;
+  border-radius: 20px;
   position: relative;
   cursor: pointer;
-  transition: background 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .set-toggle-thumb {
-  width: 16px;
-  height: 16px;
-  background: #111;
+  width: 14px;
+  height: 14px;
+  background: #fff;
   border-radius: 50%;
   position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  top: 3px;
+  left: 3px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 .set-toggle.on {
   background: #111;
 }
 .set-toggle.on .set-toggle-thumb {
-  transform: translateX(20px);
-  background: #fff;
+  transform: translateX(18px);
 }
 
 .set-toggle.disabled {
-  border-color: #ccc;
+  opacity: 0.5;
   cursor: not-allowed;
-}
-.set-toggle.disabled .set-toggle-thumb {
-  background: #ccc;
-}
-.set-toggle.disabled.on {
-  background: #ccc;
 }
 
 /* Tables */
