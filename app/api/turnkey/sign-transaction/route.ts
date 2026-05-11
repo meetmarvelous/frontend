@@ -81,10 +81,13 @@ export async function POST(req: NextRequest) {
   }
 
   // 2. Look up the user's sub-organization
+  // auth_sessions stores wallet_address lowercased (EVM-style normalization), but
+  // turnkey_users stores the original base58 case for Solana addresses. Use a
+  // case-insensitive match so both EVM and Solana sessions resolve correctly.
   const { data: tkUser, error: tkError } = await supabase
     .from("turnkey_users")
     .select("sub_organization_id, wallet_address")
-    .eq("wallet_address", session.wallet_address)
+    .ilike("wallet_address", session.wallet_address)
     .maybeSingle();
   if (tkError || !tkUser?.sub_organization_id || !tkUser.wallet_address) {
     return NextResponse.json({ error: "Turnkey user record not found" }, { status: 404 });

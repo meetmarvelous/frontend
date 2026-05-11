@@ -350,7 +350,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     marginLeft: 4,
                   }}>
                     {authenticated && walletAddress
-                      ? walletAddress.slice(0, 2).toUpperCase()
+                      ? (walletAddress.startsWith("0x") ? walletAddress.slice(2, 4) : walletAddress.slice(0, 2)).toUpperCase()
                       : <User size={16} />}
                   </button>
                 )}
@@ -366,51 +366,28 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
               >
                 {/* Header Section */}
                 <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#ebe5d8"}` }}>
-                  <div style={{ 
-                    width: 40, height: 40, borderRadius: "50%", 
-                    background: "#111", color: "#fff", 
+                  <div style={{
+                    width: 40, height: 40, borderRadius: "50%",
+                    background: "#111", color: "#fff",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: 14, fontWeight: 500, fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic"
                   }}>
-                    {walletAddress ? walletAddress.slice(2, 4).toUpperCase() : "SM"}
+                    {walletAddress
+                      ? (walletAddress.startsWith("0x") ? walletAddress.slice(2, 4) : walletAddress.slice(0, 2)).toUpperCase()
+                      : <User size={16} />}
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 500, fontSize: 14 }}>{username === "Artist" ? "Sam Mehta" : username}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>
+                      {authenticated ? (username === "Artist" ? "Account" : username) : "Guest"}
+                    </div>
                     <div className="mono" style={{ fontSize: 10, color: isDark ? "#7d8a8c" : "#6b665e", marginTop: 2 }}>
-                      {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "0x4a...ef21"} / sam.mehta
+                      {walletAddress
+                        ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+                        : "Not connected"}
                     </div>
                   </div>
                 </div>
 
-                {/* Network Selection Section */}
-                <div style={{ padding: "12px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#ebe5d8"}` }}>
-                  <div style={{ padding: "0 20px 8px", fontSize: 10, fontWeight: 600, color: isDark ? "#7d8a8c" : "#6b665e", textTransform: "uppercase", letterSpacing: "1px" }}>Pay with</div>
-                  {[
-                    { name: "Base", token: "USDC", balance: "142.18", color: "#0052FF" },
-                    { name: "Solana", token: "USDC", balance: "83.50", color: "#9945FF" }
-                  ].map((n, i) => (
-                    <div key={n.name} style={{ 
-                      padding: "8px 20px", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "space-between",
-                      cursor: "pointer",
-                      background: i === 0 ? (isDark ? "rgba(201, 104, 56, 0.1)" : "#fef4ef") : "transparent",
-                      border: i === 0 ? `1px solid ${isDark ? "rgba(201, 104, 56, 0.3)" : "#f9d8c8"}` : "none",
-                      margin: i === 0 ? "0 12px" : "0",
-                      borderRadius: i === 0 ? 8 : 0
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.color }} />
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 500 }}>{n.name}</div>
-                          <div className="mono" style={{ fontSize: 10, color: isDark ? "#7d8a8c" : "#6b665e" }}>{n.token} / {n.balance}</div>
-                        </div>
-                      </div>
-                      {i === 0 && <Check size={12} style={{ color: "#c96838" }} />}
-                    </div>
-                  ))}
-                </div>
 
                 {/* Links Section */}
                 <div style={{ padding: "8px 0" }}>
@@ -436,9 +413,7 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     </DropdownMenuItem>
                   ))}
                   
-                  {/* 
-                  ((authenticated && account) || solanaConnected || solanaSessionActive || !!turnkeyAddress) && ( 
-                  */}
+                  {authenticated ? (
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
@@ -453,10 +428,10 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                         } catch { window.location.reload(); }
                       }}
                       className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
-                      style={{ 
-                        padding: "10px 20px", 
-                        fontSize: 14, 
-                        fontWeight: 400, 
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: 14,
+                        fontWeight: 400,
                         cursor: "pointer",
                         outline: "none",
                         color: "inherit",
@@ -467,7 +442,25 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                     >
                       <LogOut size={14} /> Sign out
                     </DropdownMenuItem>
-                  {/* ) */}
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => setShowWalletPicker(true)}
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{
+                        padding: "10px 20px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "#c96838",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <Wallet size={14} /> Connect Wallet
+                    </DropdownMenuItem>
+                  )}
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>

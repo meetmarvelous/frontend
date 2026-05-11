@@ -2,34 +2,42 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useActiveAccount } from "thirdweb/react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useTurnkeyEmailAuth } from "@/hooks/useTurnkeyAuth";
 import EnkiCard from "@/components/enki/EnkiCard";
 import EnkiDetailPanel from "@/components/enki/EnkiDetailPanel";
-import { 
-  getFallbackEnkiPrompts, 
-  mapMarketplacePromptToEnkiPrompt 
+import {
+  mapMarketplacePromptToEnkiPrompt
 } from "@/lib/enkiPromptAdapter";
 import type { EnkiPrompt } from "@/lib/enkiPromptAdapter";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, MessageSquare, UserPlus, Sparkles } from "lucide-react";
 import "@/components/enki/enki.css";
 
-// Mock Profile Data
-const MOCK_ARTIST = {
-  name: "Sam Mehta",
-  handle: "sam.mehta",
-  bio: "Creative director and generative artist exploring the intersection of editorial photography and AI. Focused on high-fidelity, restrained aesthetics for the next generation of creative tools.",
-  stats: [
-    { label: "Prompts", value: "14" },
-    { label: "Uses", value: "2.4k" },
-    { label: "Followers", value: "312" },
-    { label: "This month", value: "$184" }
-  ]
-};
+const PROFILE_STAT_LABELS = ["Prompts", "Uses", "Followers", "This month"] as const;
+
+function useSafeActiveAccount() {
+  try { return useActiveAccount(); } catch { return null; }
+}
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Released");
   const [open, setOpen] = useState<EnkiPrompt | null>(null);
   const searchParams = useSearchParams();
+
+  const account = useSafeActiveAccount();
+  const { publicKey: solanaPublicKey } = useWallet();
+  const { address: turnkeyAddress } = useTurnkeyEmailAuth();
+  const walletAddress =
+    account?.address ?? solanaPublicKey?.toBase58() ?? turnkeyAddress ?? null;
+  const isAuthed = !!walletAddress;
+  const shortAddress = walletAddress
+    ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}`
+    : null;
+  const avatarInitials = walletAddress
+    ? (walletAddress.startsWith("0x") ? walletAddress.slice(2, 4) : walletAddress.slice(0, 2)).toUpperCase()
+    : "—";
   
   // Favorites logic (reused from feed)
   const [favs, setFavs] = useState<Record<string, boolean>>(() => {
@@ -63,10 +71,10 @@ export default function ProfilePage() {
   });
 
   const prompts = useMemo<EnkiPrompt[]>(() => {
-    const live = Array.isArray(data?.prompts)
+    if (isError) return [];
+    return Array.isArray(data?.prompts)
       ? data.prompts.map((item: unknown, index: number) => mapMarketplacePromptToEnkiPrompt(item, index))
       : [];
-    return live.length && !isError ? live : getFallbackEnkiPrompts(12);
   }, [data, isError]);
 
   return (
@@ -117,23 +125,23 @@ export default function ProfilePage() {
               border: "8px solid var(--enki-paper)",
               zIndex: 2
             }}>
-              SM
+              {avatarInitials}
             </div>
 
             {/* Title & Actions */}
             <div style={{ flex: 1, paddingBottom: 10 }}>
               <div className="mono" style={{ fontSize: 13, color: "var(--enki-ember)", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                @{MOCK_ARTIST.handle}
+                {shortAddress ?? "Not connected"}
               </div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h1 className="serif" style={{ fontSize: "clamp(48px, 5vw, 72px)", fontWeight: 400, margin: 0, lineHeight: 1 }}>
-                  <em>Sam</em> Mehta
+                  {isAuthed ? <em>My</em> : <em>Guest</em>} {isAuthed ? "Profile" : ""}
                 </h1>
                 <div style={{ display: "flex", gap: 12 }}>
-                  <button className="enki-catbar-all" style={{ height: 44 }}>
+                  <button className="enki-catbar-all" style={{ height: 44, opacity: 0.5, cursor: "not-allowed" }} disabled>
                     <UserPlus size={16} /> Follow
                   </button>
-                  <button className="enki-catbar-all active" style={{ height: 44 }}>
+                  <button className="enki-catbar-all active" style={{ height: 44, opacity: 0.5, cursor: "not-allowed" }} disabled>
                     <MessageSquare size={16} /> Message
                   </button>
                 </div>
@@ -143,14 +151,16 @@ export default function ProfilePage() {
 
           {/* Bio & Stats */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 80, marginBottom: 60 }}>
-            <div style={{ fontSize: 18, lineHeight: 1.6, color: "var(--enki-ink-2)", maxWidth: 640 }}>
-              {MOCK_ARTIST.bio}
+            <div style={{ fontSize: 18, lineHeight: 1.6, color: "var(--enki-ink-3)", maxWidth: 640, fontStyle: "italic" }}>
+              {isAuthed
+                ? "Add a bio in Settings."
+                : "Connect your wallet to see your profile."}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "24px 40px" }}>
-              {MOCK_ARTIST.stats.map(stat => (
-                <div key={stat.label}>
-                  <div className="serif" style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}>{stat.value}</div>
-                  <div className="mono" style={{ fontSize: 11, color: "var(--enki-ink-3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{stat.label}</div>
+              {PROFILE_STAT_LABELS.map(label => (
+                <div key={label}>
+                  <div className="serif" style={{ fontSize: 32, lineHeight: 1, marginBottom: 4 }}>—</div>
+                  <div className="mono" style={{ fontSize: 11, color: "var(--enki-ink-3)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
                 </div>
               ))}
             </div>
@@ -193,8 +203,8 @@ export default function ProfilePage() {
                 }}
               >
                 {tab}
-                {tab === "Released" && (
-                  <span className="mono" style={{ fontSize: 11, marginLeft: 8, opacity: 0.6 }}>14</span>
+                {tab === "Released" && prompts.length > 0 && (
+                  <span className="mono" style={{ fontSize: 11, marginLeft: 8, opacity: 0.6 }}>{prompts.length}</span>
                 )}
               </button>
             ))}
@@ -209,7 +219,7 @@ export default function ProfilePage() {
 
       {/* ─── Gallery Section ─── */}
       <div style={{ maxWidth: 1400, margin: "0 auto", padding: "40px" }}>
-        {activeTab === "Released" ? (
+        {activeTab === "Released" && prompts.length > 0 ? (
           <div className="enki-masonry">
             {prompts.map((prompt) => (
               <EnkiCard

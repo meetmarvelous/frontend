@@ -143,19 +143,19 @@ export default function SettingsPage() {
               </SettingsSection>
 
               <SettingsSection num="02" title="Leaderboard Visibility">
-                <div className="set-list-item">
+                <div className="set-list-item" title="Leaderboards coming soon">
                   <div className="set-item-content">
-                    <div className="set-item-title">Show generations on leaderboard</div>
-                    <div className="set-item-sub">Allow others to see your generation count</div>
+                    <div className="set-item-title" style={{ color: '#aaa' }}>Show generations on leaderboard</div>
+                    <div className="set-item-sub">Allow others to see your generation count (Coming Soon)</div>
                   </div>
-                  <SettingsToggle checked={settings.showLeaderboardGen} onChange={(c) => updateSetting("showLeaderboardGen", c)} />
+                  <SettingsToggle checked={settings.showLeaderboardGen} disabled={true} onChange={(c) => updateSetting("showLeaderboardGen", c)} />
                 </div>
-                <div className="set-list-item">
+                <div className="set-list-item" title="Leaderboards coming soon">
                   <div className="set-item-content">
-                    <div className="set-item-title">Show earnings on leaderboard</div>
-                    <div className="set-item-sub">Allow others to see your total earnings</div>
+                    <div className="set-item-title" style={{ color: '#aaa' }}>Show earnings on leaderboard</div>
+                    <div className="set-item-sub">Allow others to see your total earnings (Coming Soon)</div>
                   </div>
-                  <SettingsToggle checked={settings.showLeaderboardEarn} onChange={(c) => updateSetting("showLeaderboardEarn", c)} />
+                  <SettingsToggle checked={settings.showLeaderboardEarn} disabled={true} onChange={(c) => updateSetting("showLeaderboardEarn", c)} />
                 </div>
               </SettingsSection>
 

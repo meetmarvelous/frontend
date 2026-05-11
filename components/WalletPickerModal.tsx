@@ -29,6 +29,23 @@ const EVM_WALLETS: Array<{ id: WalletId; name: string; icon: string }> = [
 
 type SolanaPhase = "connecting" | "signing";
 
+function isUserRejection(e: unknown): boolean {
+  const raw = ((e as Error)?.message ?? String(e ?? "")).toLowerCase();
+  if (!raw) return false;
+  return (
+    raw.includes("user reject") ||
+    raw.includes("user denied") ||
+    raw.includes("user cancel") ||
+    raw.includes("user closed") ||
+    raw.includes("rejected the request") ||
+    raw.includes("connection rejected") ||
+    raw.includes("request rejected") ||
+    raw.includes("popup closed") ||
+    raw.includes("walletconnect modal closed") ||
+    (e as { code?: number })?.code === 4001
+  );
+}
+
 export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
   const { connect: evmConnect } = useConnect();
   const {
@@ -116,6 +133,13 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
     }
 
     const failConnect = (e: unknown) => {
+      if (isUserRejection(e)) {
+        setSolanaError(null);
+        setSolanaPhase(null);
+        setConnecting(null);
+        solanaInFlight.current = false;
+        return;
+      }
       const raw = (e as Error)?.message ?? String(e ?? "");
       const lower = raw.toLowerCase();
       const hint =
@@ -179,6 +203,14 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
       solanaInFlight.current = false;
       onClose();
     } catch (e) {
+      if (isUserRejection(e)) {
+        setSolanaError(null);
+        try { await adapter.disconnect(); } catch { /* noop */ }
+        setSolanaPhase(null);
+        setConnecting(null);
+        solanaInFlight.current = false;
+        return;
+      }
       const raw = (e as Error)?.message ?? String(e ?? "");
       console.error(`[Solana sign-in] adapter=${name} raw=`, e);
       setSolanaError(`Sign-in failed (${name}): ${raw || "unknown error"}`);
@@ -200,7 +232,9 @@ export function WalletPickerModal({ open, onClose }: WalletPickerModalProps) {
       });
       onClose();
     } catch (e) {
-      console.error("EVM connect error:", e);
+      if (!isUserRejection(e)) {
+        console.error("EVM connect error:", e);
+      }
     } finally {
       setConnecting(null);
     }

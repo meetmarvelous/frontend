@@ -30,13 +30,25 @@ interface ActiveRequest extends PaymentConfirmRequest {
 }
 
 let activeRequest: ActiveRequest | null = null;
+let cachedSnapshot: PaymentConfirmRequest | null = null;
+let cachedSource: ActiveRequest | null = null;
 const listeners = new Set<() => void>();
 
 export function getActivePaymentConfirm(): PaymentConfirmRequest | null {
-  if (!activeRequest) return null;
-  const { resolve: _resolve, ...rest } = activeRequest;
-  void _resolve;
-  return rest;
+  // useSyncExternalStore compares snapshots by reference, so return the same
+  // object until activeRequest actually changes — otherwise React loops.
+  if (!activeRequest) {
+    cachedSnapshot = null;
+    cachedSource = null;
+    return null;
+  }
+  if (activeRequest !== cachedSource) {
+    const { resolve: _resolve, ...rest } = activeRequest;
+    void _resolve;
+    cachedSnapshot = rest;
+    cachedSource = activeRequest;
+  }
+  return cachedSnapshot;
 }
 
 export function subscribePaymentConfirm(fn: () => void): () => void {

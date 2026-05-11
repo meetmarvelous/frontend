@@ -213,9 +213,9 @@ export default function AlgencyPromptEditor() {
           // 2. Otherwise, create a brand new variable with a STABLE ID
           const stableId = `var-${Math.random().toString(36).substring(2, 9)}`;
           newVars.push({
-            id: stableId, 
-            name: "",     // Name remains empty until user fills it
-            label: det.content, // Original content
+            id: stableId,
+            name: det.content,
+            label: det.content,
             description: det.content,
             type: "text",
             defaultValue: det.content,
@@ -340,14 +340,14 @@ export default function AlgencyPromptEditor() {
     
     setPromptData(prev => ({ ...prev, body: newVal }));
     setVariables(prev => [...prev, {
-      id: stableId, 
-      name: "", 
-      label: text, 
+      id: stableId,
+      name: text,
+      label: text,
       description: text,
-      type: "text", 
-      defaultValue: text, 
-      values: [text], 
-      required: true, 
+      type: "text",
+      defaultValue: text,
+      values: [text],
+      required: true,
       position: prev.length,
       fullToken: bracketed
     }]);
