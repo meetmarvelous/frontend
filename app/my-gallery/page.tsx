@@ -1,6 +1,4 @@
 "use client";
-
-import Navbar from "@/components/Navbar";
 import { useActiveAccount } from "thirdweb/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useEffect, useMemo, useState } from "react";
@@ -141,8 +139,7 @@ export default function MyGalleryPage() {
 
   if (!authenticated || !userKey) {
     return (
-      <div className="min-h-screen bg-background pt-16">
-        <Navbar />
+      <div className="min-h-screen bg-background">
         <main className="w-full px-6 lg:px-8 py-10 max-w-5xl mx-auto">
           <Card className="border border-border/60 bg-card/60 backdrop-blur">
             <CardHeader>
@@ -162,8 +159,7 @@ export default function MyGalleryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-16">
-      <Navbar />
+    <div className="min-h-screen bg-background">
       <WalletPickerModal open={showWalletPicker} onClose={() => setShowWalletPicker(false)} />
       <main className="w-full px-6 lg:px-8 py-6 max-w-6xl mx-auto">
         <div className="flex items-start justify-between gap-3 mb-4">

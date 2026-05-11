@@ -23,7 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import nlp from "compromise";
-import Navbar from "./Navbar";
+
 
 /* ─── Types ─── */
 type VariableType = "text" | "checkbox";

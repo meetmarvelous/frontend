@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
 import EnkiCard from "@/components/enki/EnkiCard";
 import EnkiDetailPanel from "@/components/enki/EnkiDetailPanel";
 import EnkiFilters from "@/components/enki/EnkiFilters";
@@ -58,8 +59,8 @@ export default function EnkiFeedPage() {
     return live.length && !isError ? live : getFallbackEnkiPrompts(24);
   }, [data, isError]);
 
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  const query = searchParams?.get("q")?.toLowerCase() || "";
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.toLowerCase() || "";
 
   const visible = useMemo<EnkiPrompt[]>(() => {
     let filtered = prompts;

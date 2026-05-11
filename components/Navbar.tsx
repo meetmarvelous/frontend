@@ -15,6 +15,7 @@ import {
   Menu,
   Sun,
   Moon,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useState, useEffect, createContext, useContext } from "react";
+import { useState, useEffect, createContext, useContext, useRef } from "react";
 import { useActiveAccount, useActiveWallet, useDisconnect } from "thirdweb/react";
 import { ChainSwitcher } from "./ChainSwitcher";
 import { WalletPickerModal } from "./WalletPickerModal";
@@ -102,6 +103,18 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
   const router = useRouter();
   const { toast } = useToast();
   const pathname = usePathname();
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const walletAddress = walletInfo.address ?? solanaSessionAddress ?? turnkeyAddress ?? (solanaSessionActive ? solanaPublicKey?.toBase58() ?? null : null);
   const { isMobile, isTablet, isDesktop } = useBreakpoint();
   const isDark = themeReady && theme === "dark";
@@ -128,7 +141,6 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
     { label: "DISCOVER", href: "/", disabled: false },
     { label: "IMAGES", href: "/images", disabled: false },
     { label: "VIDEOS", href: "/showcase", disabled: true, tooltip: "Video prompts will be implemented soon" },
-    { label: "FAVORITES", href: "/my-gallery", disabled: false },
   ];
 
   const visibleNavLinks = isTablet
@@ -188,15 +200,22 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
             {!isMobile && (
               <div style={{ 
                 position: "relative", 
-                width: isTablet ? 180 : 240, 
-                height: 36, 
+                width: isTablet ? 300 : 480, 
+                height: 40, 
                 display: "flex", 
                 alignItems: "center",
-                marginRight: 8
+                marginRight: 24,
+                padding: "0 14px",
+                border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#d8d2c5"}`,
+                borderRadius: 100,
+                background: isDark ? "rgba(255,255,255,0.05)" : "#f3efe7",
+                transition: "all 0.2s ease"
               }}>
-                <Search size={14} color={iconColor} style={{ position: "absolute", left: 12, opacity: 0.5, pointerEvents: "none" }} />
+                <Search size={16} color={isDark ? "#7d8a8c" : "#6b665e"} style={{ flexShrink: 0 }} />
                 <input 
-                  placeholder="Search Enki Art..."
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search prompts, artists..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {
@@ -208,28 +227,27 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                       }
                     }
                   }}
-                  onFocus={(e) => {
-                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-                    e.currentTarget.style.boxShadow = `0 0 0 1px ${isDark ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)"}`;
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
                   style={{ 
-                    width: "100%", 
+                    flex: 1, 
                     height: "100%", 
-                    padding: "0 12px 0 34px", 
-                    borderRadius: 20, 
-                    background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
+                    padding: "0 10px", 
+                    background: "transparent",
                     border: "none",
                     outline: "none",
-                    fontSize: 13,
-                    color: isDark ? "#fff" : "#111",
-                    fontFamily: "inherit",
-                    transition: "all 0.2s ease"
+                    fontSize: 14,
+                    color: isDark ? "#e8e0cc" : "#1a1715",
+                    fontFamily: "var(--font-sans)",
                   }}
                 />
+                <span className="mono" style={{ 
+                  fontSize: 10, 
+                  color: isDark ? "#7d8a8c" : "#6b665e", 
+                  border: `1px solid ${isDark ? "rgba(255,255,255,0.15)" : "#d8d2c5"}`, 
+                  padding: "2px 5px", 
+                  borderRadius: 3, 
+                  whiteSpace: "nowrap",
+                  opacity: 0.8
+                }}>Ctrl K</span>
               </div>
             )}
 
@@ -339,76 +357,93 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent 
                 align="end" 
-                className="w-64 p-2 mt-2 rounded-[24px] border shadow-2xl"
+                className="w-72 p-0 rounded-[12px] overflow-hidden border shadow-2xl"
                 style={{
-                  background: isDark ? "#171717" : "#ffffff",
-                  color: isDark ? "#ffffff" : "#111111",
-                  borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"
+                  background: isDark ? "#131c22" : "#faf8f4",
+                  color: isDark ? "#e8e0cc" : "#1a1715",
+                  borderColor: isDark ? "rgba(255,255,255,0.1)" : "#d8d2c5"
                 }}
               >
-                {authenticated && walletAddress ? (
-                  <div className="px-2 py-2 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Wallet className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-sm font-medium">Wallet Connected</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <code className="text-xs font-mono text-foreground/80 break-all flex-1">{walletAddress}</code>
-                      <Button variant="ghost" size="icon" className="h-6 w-6 flex-shrink-0" onClick={(e) => { e.stopPropagation(); handleCopyAddress(); }}>
-                        <Copy className="h-3 w-3" />
-                      </Button>
+                {/* Header Section */}
+                <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12, borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#ebe5d8"}` }}>
+                  <div style={{ 
+                    width: 40, height: 40, borderRadius: "50%", 
+                    background: "#111", color: "#fff", 
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, fontWeight: 500, fontFamily: "var(--font-instrument-serif), serif", fontStyle: "italic"
+                  }}>
+                    {walletAddress ? walletAddress.slice(2, 4).toUpperCase() : "SM"}
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 500, fontSize: 14 }}>{username === "Artist" ? "Sam Mehta" : username}</div>
+                    <div className="mono" style={{ fontSize: 10, color: isDark ? "#7d8a8c" : "#6b665e", marginTop: 2 }}>
+                      {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : "0x4a...ef21"} / sam.mehta
                     </div>
                   </div>
-                ) : (
-                  <div className="px-2 py-2">
-                    <p className="text-sm font-medium" style={{ color: isDark ? "#fff" : "#111" }}>Guest</p>
-                    <p className="text-xs" style={{ color: isDark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)" }}>Log in to save your creations</p>
-                  </div>
-                )}
-                <DropdownMenuSeparator />
+                </div>
 
-                {isMobile && (
-                  <>
-                    <DropdownMenuItem onClick={() => router.push("/editor")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <PenLine className="h-4 w-4 mr-2 text-[#d94f3d]" /> Release prompt
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/leaderboard")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <Trophy className="h-4 w-4 mr-2 text-[#d94f3d]" /> Leaderboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/referrals")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <Users className="h-4 w-4 mr-2 text-[#d94f3d]" /> Referrals
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push("/feedback")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                      <MessageSquareHeart className="h-4 w-4 mr-2 text-[#d94f3d]" /> Feedback
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                  </>
-                )}
+                {/* Network Selection Section */}
+                <div style={{ padding: "12px 0", borderBottom: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "#ebe5d8"}` }}>
+                  <div style={{ padding: "0 20px 8px", fontSize: 10, fontWeight: 600, color: isDark ? "#7d8a8c" : "#6b665e", textTransform: "uppercase", letterSpacing: "1px" }}>Pay with</div>
+                  {[
+                    { name: "Base", token: "USDC", balance: "142.18", color: "#0052FF" },
+                    { name: "Solana", token: "USDC", balance: "83.50", color: "#9945FF" }
+                  ].map((n, i) => (
+                    <div key={n.name} style={{ 
+                      padding: "8px 20px", 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "space-between",
+                      cursor: "pointer",
+                      background: i === 0 ? (isDark ? "rgba(201, 104, 56, 0.1)" : "#fef4ef") : "transparent",
+                      border: i === 0 ? `1px solid ${isDark ? "rgba(201, 104, 56, 0.3)" : "#f9d8c8"}` : "none",
+                      margin: i === 0 ? "0 12px" : "0",
+                      borderRadius: i === 0 ? 8 : 0
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: n.color }} />
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 500 }}>{n.name}</div>
+                          <div className="mono" style={{ fontSize: 10, color: isDark ? "#7d8a8c" : "#6b665e" }}>{n.token} / {n.balance}</div>
+                        </div>
+                      </div>
+                      {i === 0 && <Check size={12} style={{ color: "#c96838" }} />}
+                    </div>
+                  ))}
+                </div>
 
-                <DropdownMenuItem onClick={() => router.push("/my-gallery")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">My Gallery</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/my-prompts")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">My Prompts</DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                <DropdownMenuItem onClick={() => router.push("/leaderboard")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <Trophy className="h-4 w-4 mr-2 text-[#d94f3d]" /> Leaderboard
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/referrals")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <Users className="h-4 w-4 mr-2 text-[#d94f3d]" /> Referrals
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/feedback")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">
-                  <MessageSquareHeart className="h-4 w-4 mr-2" style={{ color: isDark ? "#fff" : "#111" }} /> Earn for feedback
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-black/10 dark:bg-white/10" />
-                <DropdownMenuItem onClick={() => router.push("/settings")} className="rounded-xl cursor-pointer focus:bg-[#d94f3d]/10 focus:text-[#d94f3d]">Settings</DropdownMenuItem>
-
-                {((authenticated && account) || solanaConnected || solanaSessionActive || !!turnkeyAddress) && (
-                  <>
-                    <DropdownMenuSeparator className="bg-black/5" />
+                {/* Links Section */}
+                <div style={{ padding: "8px 0" }}>
+                  {[
+                    { label: "My profile", href: "/profile" },
+                    { label: "Favorites", href: "/my-gallery" },
+                    { label: "Settings", href: "/settings" }
+                  ].map((link) => (
+                    <DropdownMenuItem 
+                      key={link.label}
+                      onClick={() => router.push(link.href)}
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{ 
+                        padding: "10px 20px", 
+                        fontSize: 14, 
+                        fontWeight: 400, 
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "inherit"
+                      }}
+                    >
+                      {link.label}
+                    </DropdownMenuItem>
+                  ))}
+                  
+                  {/* 
+                  ((authenticated && account) || solanaConnected || solanaSessionActive || !!turnkeyAddress) && ( 
+                  */}
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
                           if (turnkeyAddress) { clearTurnkeyAuth(); toast({ title: "Signed out" }); return; }
                           if (solanaConnected || solanaSessionActive) {
-                            // 세션 정리 후 어댑터 disconnect까지 강제 실행. 둘 다 실패해도 다음 단계로.
                             await solanaSessionLogout().catch(() => {});
                             await solanaDisconnect().catch(() => {});
                           }
@@ -417,13 +452,23 @@ export default function Navbar({ username = "Artist", onSearch }: NavbarProps) {
                           toast({ title: "Wallet disconnected" });
                         } catch { window.location.reload(); }
                       }}
-                      className="cursor-pointer text-red-500 focus:text-red-600 focus:bg-red-50 rounded-xl mt-1"
+                      className="focus:bg-[#c96838]/10 focus:text-[#c96838]"
+                      style={{ 
+                        padding: "10px 20px", 
+                        fontSize: 14, 
+                        fontWeight: 400, 
+                        cursor: "pointer",
+                        outline: "none",
+                        color: "inherit",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8
+                      }}
                     >
-                      <LogOut className="h-4 w-4 mr-2" /> {turnkeyAddress ? "Sign Out" : "Disconnect Wallet"}
+                      <LogOut size={14} /> Sign out
                     </DropdownMenuItem>
-                  </>
-                )}
-
+                  {/* ) */}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
