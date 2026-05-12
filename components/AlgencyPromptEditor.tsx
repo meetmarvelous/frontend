@@ -844,8 +844,36 @@ export default function AlgencyPromptEditor() {
     },
   });
 
+  const publishPromptMutation = useMutation({
+    mutationFn: async () => {
+      let id = ui.currentPromptId;
+      if (!id) {
+        const saved = await savePromptMutation.mutateAsync();
+        if (typeof saved === "object" && saved !== null && "id" in saved) {
+          id = String((saved as { id?: unknown }).id ?? "");
+        }
+      }
+      if (!id) throw new Error("Could not save prompt before publishing");
+      const response = await apiRequest("PATCH", `/api/prompts/${id}`, { published: true });
+      if (!response.ok) throw new Error("Failed to publish prompt");
+      return response.json();
+    },
+    onSuccess: () =>
+      toast({
+        title: "Published",
+        description: "Prompt is now live on the marketplace.",
+      }),
+    onError: (error: unknown) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Publish failed.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const verifiedCount = versions.filter((s) => s.imageUrl && s.status === "complete").length;
-  const isPublishDisabled = verifiedCount === 0;
+  const isPublishDisabled = verifiedCount === 0 || publishPromptMutation.isPending;
 
   return (
     <div className="alg-page" onClick={() => { setUi(prev => ({ ...prev, showAvatarDropdown: false, tooltip: null })) }}>
@@ -1532,8 +1560,9 @@ export default function AlgencyPromptEditor() {
                     className="alg-btn alg-btn--primary alg-btn--sm"
                     style={{ padding: "6px 8px", background: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", borderColor: isPublishDisabled ? "#D5D1CB" : "var(--alg-dark)", color: "white", opacity: 1, cursor: isPublishDisabled ? "not-allowed" : "pointer", whiteSpace: "nowrap" }}
                     disabled={isPublishDisabled}
+                    onClick={() => publishPromptMutation.mutate()}
                   >
-                    Publish
+                    {publishPromptMutation.isPending ? "Publishing…" : "Publish"}
                   </button>
                 </div>
               </div>
