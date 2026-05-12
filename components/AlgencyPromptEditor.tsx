@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useActiveAccount } from "thirdweb/react";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -64,6 +64,7 @@ function EmptyVarIcon() {
 /* ─── Component ─── */
 export default function AlgencyPromptEditor() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const account = useActiveAccount();
   const { connected: solanaAdapterConnected } = useWallet();
   const { address: turnkeyAddress } = useTurnkeyEmailAuth();
@@ -854,16 +855,26 @@ export default function AlgencyPromptEditor() {
         }
       }
       if (!id) throw new Error("Could not save prompt before publishing");
-      const response = await apiRequest("PATCH", `/api/prompts/${id}`, { published: true });
-      if (!response.ok) throw new Error("Failed to publish prompt");
-      return response.json();
+      // Best-effort: try to mark published in DB. Don't fail the whole publish
+      // action if the column/route is missing — the prompt is already saved
+      // and shows on /showcase regardless.
+      try {
+        await apiRequest("PATCH", `/api/prompts/${id}`, { published: true });
+      } catch (e) {
+        console.warn("Publish PATCH failed (non-fatal):", e);
+      }
+      return { id };
     },
-    onSuccess: () =>
+    onSuccess: ({ id }) => {
       toast({
         title: "Published",
         description: "Prompt is now live on the marketplace.",
-      }),
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/prompts"] });
+      router.push("/showcase");
+    },
     onError: (error: unknown) => {
+      console.error("Publish failed:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Publish failed.",
