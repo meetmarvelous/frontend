@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+export interface ArtworkVariableSummary {
+  id?: string;
+  name: string;
+  label?: string;
+  type: string;
+}
+
 export interface ArtworkItem {
   id: string;
   title: string;
@@ -23,6 +30,7 @@ export interface ArtworkItem {
   tags?: string[];
   isFreeShowcase?: boolean;
   publicPromptText?: string;
+  variables?: ArtworkVariableSummary[];
 }
 
 interface ArtworkCardProps {
@@ -123,6 +131,41 @@ function ArtworkCard({
             )}
           </div>
 
+          {variant === "prompt" &&
+            (item.isFree || item.isFreeShowcase) &&
+            item.publicPromptText && (
+              <p
+                className="mt-2 text-xs text-white/85 leading-snug line-clamp-3 italic"
+                data-testid={`text-public-prompt-${item.id}`}
+              >
+                {item.publicPromptText}
+              </p>
+            )}
+
+          {variant === "prompt" &&
+            !item.isFree &&
+            !item.isFreeShowcase &&
+            item.variables &&
+            item.variables.length > 0 && (
+              <div
+                className="mt-2 flex flex-wrap gap-1"
+                data-testid={`variables-${item.id}`}
+              >
+                {item.variables.map((v) => (
+                  <span
+                    key={v.id ?? v.name}
+                    className="inline-flex items-center gap-1 rounded-full bg-white/15 backdrop-blur-sm px-2 py-0.5 text-[10px] font-medium text-white/90 border border-white/15"
+                  >
+                    <span className="truncate max-w-[80px]">
+                      {v.label || v.name}
+                    </span>
+                    <span className="text-white/55">·</span>
+                    <span className="text-white/55 lowercase">{v.type}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+
           {variant === "prompt" && (
             <Button
               size="sm"
@@ -172,11 +215,9 @@ export default function ArtworkGrid({
   };
 
   if (useMasonryLayout) {
-    const repeatedItems = [...items, ...items, ...items, ...items];
-
     return (
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-0 auto-rows-[200px]">
-        {repeatedItems.map((item, idx) => {
+        {items.map((item, idx) => {
           const spans =
             idx % 7 === 0
               ? "row-span-2 col-span-2"

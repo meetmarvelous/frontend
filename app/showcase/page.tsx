@@ -1,7 +1,7 @@
 "use client";
 
 import FilterBar from "@/components/FilterBar";
-import PromptCard from "@/components/PromptCard";
+import ArtworkGrid, { ArtworkItem } from "@/components/ArtworkGrid";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -108,33 +108,44 @@ export default function Showcase() {
 
   const isVideo = (url: string) => /\.(mp4|webm|mov|avi)$/i.test(url ?? "");
 
-  const visiblePrompts = useMemo(() => {
+  const visiblePrompts = useMemo<ArtworkItem[]>(() => {
     return allPrompts
       .filter((p: any) => p.id)
-      .map((p: any) => {
+      .map((p: any): ArtworkItem => {
         const creator = creatorsMap.get(p.creatorId);
-
-        const primaryImage = p.showcaseImages?.find(
-          (i: any) => i.isPrimary === true
+        const apiThumb =
+          p.thumbnail ||
+          p.imageUrl ||
+          p.showcaseImages?.find((i: any) => i?.isPrimary === true)?.thumbnail ||
+          p.showcaseImages?.[0]?.thumbnail ||
+          p.showcaseImages?.[0]?.url ||
+          "";
+        const isFree = Boolean(
+          p.isFree ?? (p.type === "showcase" || p.type === "free" || p.type === "free-prompt") ?? p.isFreeShowcase
         );
-        const selectedImage = primaryImage || p.showcaseImages?.[0];
-        const imageUrl = selectedImage?.thumbnail || selectedImage?.url || "";
 
         return {
           id: p.id,
-          title: p.title,
-          artist: creator?.displayName || creator?.username || "Unknown Artist",
-          price: p.pricing?.pricePerGeneration || 0,
-          isFree: p.type === "showcase" || p.type === "free",
-          rating: p.stats?.reviews?.averageRating || 0,
-          downloads: p.stats?.totalGenerations || 0,
-          thumbnail: imageUrl,
-          category: p.category || "",
+          title: p.title ?? "",
+          artistId: p.creatorId,
+          artistName:
+            creator?.displayName || creator?.username || "Unknown Artist",
+          price: typeof p.price === "number" ? p.price : (p.pricing?.pricePerGeneration ?? 0),
+          isFree,
+          isFreeShowcase: Boolean(p.isFreeShowcase ?? false),
+          rating: typeof p.rating === "number" ? p.rating : (p.stats?.reviews?.averageRating ?? 0),
+          downloads: typeof p.downloads === "number" ? p.downloads : (p.stats?.totalGenerations ?? 0),
+          thumbnail: apiThumb,
+          imageUrl: apiThumb,
+          category: p.category ?? "",
+          tags: p.tags,
+          publicPromptText: p.publicPromptText,
+          variables: Array.isArray(p.variables) ? p.variables : undefined,
         };
       })
       .filter((p) => {
-        if (typeParam === "videos") return isVideo(p.thumbnail);
-        if (typeParam === "images") return !isVideo(p.thumbnail);
+        if (typeParam === "videos") return isVideo(p.thumbnail ?? "");
+        if (typeParam === "images") return !isVideo(p.thumbnail ?? "");
         return true;
       });
   }, [allPrompts, creatorsMap, typeParam]);
@@ -193,24 +204,21 @@ export default function Showcase() {
     <div className="min-h-screen bg-background pt-16">
       <FilterBar onFilterChange={(f) => console.log("Filters:", f)} />
       <main className="w-full px-2 py-2">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-1 auto-rows-[200px]">
-          {visiblePrompts.map((prompt, idx) => {
-            const spans =
-              idx % 7 === 0
-                ? "row-span-2 col-span-2"
-                : idx % 5 === 0
-                  ? "row-span-2"
-                  : "";
-            return (
-              <div key={prompt.id} className={spans}>
-                <PromptCard
-                  {...prompt}
-                  onClick={() => setSelectedPromptData({ ...prompt, imageUrl: prompt.thumbnail })}
-                />
-              </div>
-            );
-          })}
-        </div>
+        <ArtworkGrid
+          items={visiblePrompts}
+          variant="prompt"
+          useMasonryLayout
+          onCardClick={(id) => {
+            const prompt = visiblePrompts.find((p) => p.id === id);
+            if (prompt) {
+              setSelectedPromptData({
+                ...prompt,
+                artist: prompt.artistName,
+                imageUrl: prompt.thumbnail,
+              });
+            }
+          }}
+        />
         <div ref={sentinelRef} className="h-10" />
         <div className="w-full py-4 flex items-center justify-center text-sm text-muted-foreground">
           {isLoadingMore
