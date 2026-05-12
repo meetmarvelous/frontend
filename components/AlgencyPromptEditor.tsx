@@ -1305,10 +1305,10 @@ export default function AlgencyPromptEditor() {
               <div className="alg-bridge-track__dot" />
             </div>
             <button
-              className={`alg-arrow-btn alg-arrow-btn--forward ${(variables.length > 0 && variables.every(v => v.type === "checkbox" || v.defaultValue)) ? "alg-arrow-btn--active alg-arrow-btn--glow" : ""}`}
-              disabled={variables.length === 0 || !variables.every(v => v.type === "checkbox" || v.defaultValue)}
+              className={`alg-arrow-btn alg-arrow-btn--forward ${(variables.length === 0 || variables.every(v => v.type === "checkbox" || v.defaultValue)) ? "alg-arrow-btn--active alg-arrow-btn--glow" : ""}`}
+              disabled={variables.length > 0 && !variables.every(v => v.type === "checkbox" || v.defaultValue)}
               onClick={() => handleStackVariables()}
-              title="Push variables to Verify"
+              title={variables.length === 0 ? "Push prompt to Verify" : "Push variables to Verify"}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </button>
